@@ -25,13 +25,13 @@ ApplicationWindow {
 
         switch(role) {
             case "student":
-                stackView.replace(studentPage)
+                stackView.push(studentPage)
                 break
             case "teacher":
-                stackView.replace(teacherPage)
+                 stackView.push(teacherPage)
                 break
             case "admin":
-                stackView.replace(adminPage)
+                stackView.push(adminPage)
                 break
         }
         centerWindow()
@@ -42,7 +42,8 @@ ApplicationWindow {
         mainWindow.width = 600
         mainWindow.height = 800
         currentRole = ""
-        stackView.replace(loginPage)
+        stackView.clear()
+        stackView.push(loginPage)
         centerWindow()
     }
 
@@ -55,38 +56,38 @@ ApplicationWindow {
         anchors.fill: parent
         initialItem: loginPage
         // 页面切换动画 - 淡入淡出
-       pushEnter: Transition {
-           PropertyAnimation {
-               property: "opacity"
-               from: 0
-               to: 1
-               duration: 500
+           pushEnter: Transition {
+               PropertyAnimation {
+                   property: "opacity"
+                   from: 0
+                   to: 1
+                   duration: 300
+               }
            }
-       }
-       pushExit: Transition {
-           PropertyAnimation {
-               property: "opacity"
-               from: 1
-               to: 0
-               duration: 500
+           pushExit: Transition {
+               PropertyAnimation {
+                   property: "opacity"
+                   from: 1
+                   to: 0
+                   duration: 300
+               }
            }
-       }
-       popEnter: Transition {
-           PropertyAnimation {
-               property: "opacity"
-               from: 0
-               to: 1
-               duration: 500
+           popEnter: Transition {
+               PropertyAnimation {
+                   property: "opacity"
+                   from: 0
+                   to: 1
+                   duration: 300
+               }
            }
-       }
-       popExit: Transition {
-           PropertyAnimation {
-               property: "opacity"
-               from: 1
-               to: 0
-               duration: 500
+           popExit: Transition {
+               PropertyAnimation {
+                   property: "opacity"
+                   from: 1
+                   to: 0
+                   duration: 300
+               }
            }
-       }
     }
 
     // 加载各个页面
