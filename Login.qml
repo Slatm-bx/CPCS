@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "pageswitching.js" as Pages
 
 Rectangle {
     id: loginPage
@@ -240,10 +241,8 @@ Rectangle {
                             return
                         }
 
-                        // 跳转到对应界面
-                        if (mainWindow) {
-                            mainWindow.loginSuccess(role)
-                        }
+                        // 直接调用JavaScript函数 - 这是关键修改
+                        Pages.loginSuccess(role)
                     }
                 }
             }

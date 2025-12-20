@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
+import "pageswitching.js" as Pages
 
 ApplicationWindow {
     id: mainWindow
@@ -11,46 +12,14 @@ ApplicationWindow {
 
     property string currentRole: ""  // 记录当前登录角色
 
-    // 窗口居中函数
-    function centerWindow() {
-        mainWindow.x = (Screen.desktopAvailableWidth - mainWindow.width) / 2
-        mainWindow.y = (Screen.desktopAvailableHeight - mainWindow.height) / 2
-    }
 
-    // 登录成功跳转
-    function loginSuccess(role) {
-        currentRole = role
-        mainWindow.width = 1820
-        mainWindow.height = 1024
-
-        switch(role) {
-            case "student":
-                stackView.push(studentPage)
-                break
-            case "teacher":
-                 stackView.push(teacherPage)
-                break
-            case "admin":
-                stackView.push(adminPage)
-                break
-        }
-        centerWindow()
-    }
-
-    // 退出登录
-    function logout() {
-        mainWindow.width = 600
-        mainWindow.height = 800
-        currentRole = ""
-        stackView.clear()
-        stackView.push(loginPage)
-        centerWindow()
-    }
-
+    // 初始化JavaScript模块
     Component.onCompleted: {
-        centerWindow()
+        // 初始化JavaScript模块，传递mainWindow和stackView
+        Pages.initialize(mainWindow, stackView)
+        Pages.centerWindow()
+        stackView.push("Login.qml")
     }
-
     StackView {
         id: stackView
         anchors.fill: parent

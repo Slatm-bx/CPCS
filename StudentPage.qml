@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "pageswitching.js" as Pages
 
 Rectangle {
     id: studentPage
@@ -37,9 +38,7 @@ Rectangle {
         font.pixelSize: 18
 
         onClicked: {
-            if (mainWindow) {
-                mainWindow.logout()
-            }
+            Pages.logout()
         }
     }
 

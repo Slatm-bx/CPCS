@@ -28,6 +28,18 @@ source_group("QML Files" FILES
     Main.qml
 )
 
+source_group("Student Files" FILES
+    StudentPage.qml
+)
+
+source_group("Teacher Files" FILES
+    TeacherPage.qml
+)
+
+source_group("Admin Files" FILES
+    AdminPage.qml
+)
+
 target_compile_features(apppsychological PRIVATE cxx_std_23)
 
 target_link_libraries(apppsychological
