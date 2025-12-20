@@ -1,46 +1,55 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-Item {
+Rectangle {
     id: adminPage
-    width: parent ? parent.width : 1024
-    height: parent ? parent.height : 768
+    color: "#f3e5f5"  // 浅紫色背景
 
-    property string userName: ""
-    signal logout()
-
-    Rectangle {
-        anchors.fill: parent
-        color: "#fff5f5"
+    // 页面标题
+    Text {
+        id: titleText
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: 50
+        text: "管理员主页"
+        font.pixelSize: 32
+        font.bold: true
+        color: "#6a1b9a"
     }
 
-    Column {
+    // 当前用户显示
+    Text {
+        anchors.top: titleText.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: 20
+        text: "当前身份：管理员"
+        font.pixelSize: 18
+        color: "#555"
+    }
+
+    // 退出登录按钮 - 在页面中央
+    Button {
         anchors.centerIn: parent
-        spacing: 30
+        width: 150
+        height: 50
+        text: "退出登录"
+        font.pixelSize: 18
 
-        Text {
-            text: "👨‍💼 管理员页面"
-            font.pixelSize: 32
-            font.bold: true
-            color: "#333"
-        }
-
-        Text {
-            text: "当前用户：" + adminPage.userName
-            font.pixelSize: 20
-            color: "#666"
-        }
-
-        Button {
-            text: "退出登录"
-            font.pixelSize: 16
-            width: 120
-            height: 40
-
-            onClicked: {
-                console.log("管理员页面：触发退出信号")
-                adminPage.logout()
+        onClicked: {
+            if (mainWindow) {
+                mainWindow.logout()
             }
         }
+    }
+
+    // 简单说明文字
+    Text {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 50
+        text: "这里将放置管理员功能模块"
+        color: "#777"
+        font.pixelSize: 16
     }
 }

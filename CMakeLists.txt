@@ -16,7 +16,7 @@ qt_add_qml_module(apppsychological
     SOURCES     main.cpp
     QML_FILES   Main.qml
     RESOURCES
-    QML_FILES Register.qml
+    QML_FILES
     QML_FILES Login.qml
     QML_FILES StudentPage.qml
     QML_FILES TeacherPage.qml

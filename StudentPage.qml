@@ -1,54 +1,55 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-Item {
+Rectangle {
     id: studentPage
-    width: parent ? parent.width : 1024
-    height: parent ? parent.height : 768
+    color: "#e8f5e9"  // 浅绿色背景
 
-    // 接收的参数
-    property string userName: ""
-
-    // 定义信号
-    signal logout()
-
-    // 背景
-    Rectangle {
-        anchors.fill: parent
-        color: "#f0f8ff"
+    // 页面标题
+    Text {
+        id: titleText
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: 50
+        text: "学生主页"
+        font.pixelSize: 32
+        font.bold: true
+        color: "#2e7d32"
     }
 
-    Column {
+    // 当前用户显示
+    Text {
+        anchors.top: titleText.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: 20
+        text: "当前身份：学生"
+        font.pixelSize: 18
+        color: "#555"
+    }
+
+    // 退出登录按钮 - 在页面中央
+    Button {
         anchors.centerIn: parent
-        spacing: 30
+        width: 150
+        height: 50
+        text: "退出登录"
+        font.pixelSize: 18
 
-        Text {
-            text: "👨‍🎓 学生页面"
-            font.pixelSize: 32
-            font.bold: true
-            color: "#333"
-        }
-
-        Text {
-            text: "当前用户：" + studentPage.userName
-            font.pixelSize: 20
-            color: "#666"
-        }
-
-        Button {
-            text: "退出登录"
-            font.pixelSize: 16
-            width: 120
-            height: 40
-
-            onClicked: {
-                console.log("学生页面：触发退出信号")
-                studentPage.logout()
+        onClicked: {
+            if (mainWindow) {
+                mainWindow.logout()
             }
         }
     }
 
-    Component.onCompleted: {
-        console.log("学生页面创建完成，用户：" + userName, "尺寸:", width, "×", height)
+    // 简单说明文字
+    Text {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 50
+        text: "这里将放置学生功能模块"
+        color: "#777"
+        font.pixelSize: 16
     }
 }

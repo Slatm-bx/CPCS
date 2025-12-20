@@ -1,46 +1,55 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-Item {
+Rectangle {
     id: teacherPage
-    width: parent ? parent.width : 1024
-    height: parent ? parent.height : 768
+    color: "#fff3e0"  // 浅橙色背景
 
-    property string userName: ""
-    signal logout()
-
-    Rectangle {
-        anchors.fill: parent
-        color: "#f0fff0"
+    // 页面标题
+    Text {
+        id: titleText
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: 50
+        text: "教师主页"
+        font.pixelSize: 32
+        font.bold: true
+        color: "#ef6c00"
     }
 
-    Column {
+    // 当前用户显示
+    Text {
+        anchors.top: titleText.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: 20
+        text: "当前身份：教师"
+        font.pixelSize: 18
+        color: "#555"
+    }
+
+    // 退出登录按钮 - 在页面中央
+    Button {
         anchors.centerIn: parent
-        spacing: 30
+        width: 150
+        height: 50
+        text: "退出登录"
+        font.pixelSize: 18
 
-        Text {
-            text: "👨‍🏫 老师页面"
-            font.pixelSize: 32
-            font.bold: true
-            color: "#333"
-        }
-
-        Text {
-            text: "当前用户：" + teacherPage.userName
-            font.pixelSize: 20
-            color: "#666"
-        }
-
-        Button {
-            text: "退出登录"
-            font.pixelSize: 16
-            width: 120
-            height: 40
-
-            onClicked: {
-                console.log("老师页面：触发退出信号")
-                teacherPage.logout()
+        onClicked: {
+            if (mainWindow) {
+                mainWindow.logout()
             }
         }
+    }
+
+    // 简单说明文字
+    Text {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 50
+        text: "这里将放置教师功能模块"
+        color: "#777"
+        font.pixelSize: 16
     }
 }
