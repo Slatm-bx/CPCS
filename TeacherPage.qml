@@ -2,9 +2,10 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import "pageswitching.js" as Pages
+import "teacherManager.js" as TeacherMgr
 
 Rectangle {
-    id: mainWindow
+    id: teacherPage
     color: "#f8f9fa"
 
     // 第一行：顶部标题栏
@@ -14,11 +15,11 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         height: 60
-        color: "#3498db"
+        color: "#4caf50"  // 教师端使用绿色主题
 
-        // 平台标题（在整个header的中央）
+        // 平台标题
         Text {
-            text: "高校心理咨询平台"
+            text: "高校心理咨询平台 - 教师端"
             color: "white"
             font.bold: true
             font.pixelSize: 22
@@ -33,7 +34,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
 
             Label {
-                text: "当前用户：张三"
+                text: "当前用户：教师"
                 color: "white"
                 font.pixelSize: 14
                 anchors.verticalCenter: parent.verticalCenter
@@ -58,126 +59,8 @@ Rectangle {
                 }
 
                 onClicked: {
-                     Pages.logout()
-                }
-            }
-        }
-    }
-
-    // 第二行：页面标签栏
-    Rectangle {
-        id: tabBar
-        anchors.top: header.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: 45
-        color: "#ffffff"
-
-        // 底部边框
-        Rectangle {
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: 1
-            color: "#dee2e6"
-        }
-
-        Row {
-            anchors.fill: parent
-            anchors.leftMargin: 15
-            spacing: 5
-
-            // 首页标签（固定，不可关闭）
-            Rectangle {
-                id: homeTab
-                width: 90
-                height: 35
-                radius: 4
-                color: "#2ecc71"
-                anchors.verticalCenter: parent.verticalCenter
-
-                Text {
-                    text: "首页"
-                    color: "white"
-                    anchors.centerIn: parent
-                    font.pixelSize: 14
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        contentLoader.source = "HomePage.qml"
-                    }
-                }
-            }
-
-            // 动态生成的页面标签
-            ListView {
-                id: dynamicTabs
-                width: parent.width - 110
-                height: 35
-                orientation: ListView.Horizontal
-                spacing: 5
-                anchors.verticalCenter: parent.verticalCenter
-
-                model: ListModel {
-                    id: tabModel
-                }
-
-                delegate: Rectangle {
-                    width: 130
-                    height: 35
-                    radius: 4
-                    color: "#e9ecef"
-
-                    Row {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 5
-                        spacing: 8
-
-                        Text {
-                            text: model.title
-                            color: "#495057"
-                            font.pixelSize: 13
-                            anchors.verticalCenter: parent.verticalCenter
-                            elide: Text.ElideRight
-                        }
-
-                        // 关闭按钮
-                        Rectangle {
-                            width: 16
-                            height: 16
-                            radius: 8
-                            color: "transparent"
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            Text {
-                                text: "×"
-                                color: "#6c757d"
-                                font.pixelSize: 12
-                                anchors.centerIn: parent
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    tabModel.remove(index)
-                                }
-                            }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            contentLoader.source = model.source
-                        }
-                    }
+                    TeacherMgr.reset()
+                    Pages.logout()
                 }
             }
         }
@@ -185,13 +68,13 @@ Rectangle {
 
     // 主体内容区域
     Rectangle {
-        anchors.top: tabBar.bottom
+        anchors.top: header.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         color: "#ffffff"
 
-        // 左边：功能列（包含首页）
+        // 左边：功能列
         Rectangle {
             id: sidebar
             anchors.left: parent.left
@@ -217,7 +100,7 @@ Rectangle {
                 color: "#f1f3f4"
 
                 Text {
-                    text: "功能菜单"
+                    text: "教师功能菜单"
                     color: "#495057"
                     font.bold: true
                     font.pixelSize: 16
@@ -235,6 +118,7 @@ Rectangle {
 
             // 功能列表
             Column {
+                id: menuColumn
                 anchors.top: sidebarHeader.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -246,7 +130,7 @@ Rectangle {
                     id: homeMenuItem
                     width: parent.width
                     height: 50
-                    color: "#e8f4fd"  // 首页特殊背景色
+                    color: TeacherMgr.activePageId === null ? "#e8f5e8" : "white"  // 浅绿色
 
                     Row {
                         anchors.fill: parent
@@ -258,7 +142,7 @@ Rectangle {
                             width: 30
                             height: 30
                             radius: 4
-                            color: "#3498db"
+                            color: "#4caf50"  // 绿色
                             anchors.verticalCenter: parent.verticalCenter
 
                             Text {
@@ -271,7 +155,7 @@ Rectangle {
                         // 首页文字
                         Text {
                             text: "首页"
-                            color: "#3498db"
+                            color: "#4caf50"
                             font.bold: true
                             font.pixelSize: 15
                             anchors.verticalCenter: parent.verticalCenter
@@ -282,26 +166,30 @@ Rectangle {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            contentLoader.source = "HomePage.qml"
+                            var homePath = TeacherMgr.goHome()
+                            contentLoader.source = homePath
                         }
                     }
                 }
 
                 // 其他功能项
                 Repeater {
-                    model: ["功能1", "功能2", "功能3"]
+                    model: TeacherMgr.getFunctions()
 
                     delegate: Rectangle {
+                        id: menuItem
                         width: parent.width
                         height: 50
-                        color: "white"
+                        color: TeacherMgr.isPageActive(modelData.id) ? "#e8f5e8" : "white"
+
+                        property var pageInfo: modelData
 
                         // 左侧激活指示条
                         Rectangle {
-                            visible: false  // 默认隐藏，点击时显示
                             width: 4
                             height: parent.height
-                            color: "#3498db"
+                            color: "#4caf50"
+                            visible: TeacherMgr.isPageActive(modelData.id)
                         }
 
                         Row {
@@ -314,11 +202,11 @@ Rectangle {
                                 width: 30
                                 height: 30
                                 radius: 4
-                                color: "#e9ecef"
+                                color: TeacherMgr.isPageActive(modelData.id) ? "#4caf50" : "#e9ecef"
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Text {
-                                    text: "📋"
+                                    text: modelData.icon
                                     anchors.centerIn: parent
                                     font.pixelSize: 14
                                 }
@@ -326,9 +214,10 @@ Rectangle {
 
                             // 功能文字
                             Text {
-                                text: modelData
-                                color: "#495057"
+                                text: modelData.title
+                                color: TeacherMgr.isPageActive(modelData.id) ? "#4caf50" : "#495057"
                                 font.pixelSize: 15
+                                font.bold: TeacherMgr.isPageActive(modelData.id)
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -340,19 +229,20 @@ Rectangle {
                             cursorShape: Qt.PointingHandCursor
 
                             onEntered: {
-                                parent.color = "#f8f9fa"
+                                if (!TeacherMgr.isPageActive(modelData.id)) {
+                                    menuItem.color = "#f8f9fa"
+                                }
                             }
                             onExited: {
-                                parent.color = "white"
+                                if (!TeacherMgr.isPageActive(modelData.id)) {
+                                    menuItem.color = "white"
+                                }
                             }
                             onClicked: {
-                                // 创建新的页面标签
-                                var newTab = {
-                                    "title": modelData,
-                                    "source": "FunctionPage.qml?name=" + modelData
+                                var result = TeacherMgr.openPage(modelData.id)
+                                if (result && result.filePath) {
+                                    contentLoader.source = result.filePath
                                 }
-                                tabModel.append(newTab)
-                                contentLoader.source = newTab.source
                             }
                         }
                     }
@@ -379,9 +269,44 @@ Rectangle {
             Loader {
                 id: contentLoader
                 anchors.fill: parent
-                source: "HomePage.qml"
+                source: "TeacherHome.qml"
+
+                onStatusChanged: {
+                    if (status === Loader.Error) {
+                        console.error("加载页面失败:", source)
+                        source = "TeacherHome.qml"
+                    }
+                }
             }
         }
     }
-}
 
+    // 定时器：更新菜单项颜色
+    Timer {
+        id: updateTimer
+        interval: 100
+        running: true
+        repeat: true
+        onTriggered: updateMenuView()
+    }
+
+    // 函数：更新菜单项颜色
+    function updateMenuView() {
+        // 更新首页菜单项颜色
+        homeMenuItem.color = TeacherMgr.activePageId === null ? "#e8f5e8" : "white"
+
+        // 更新功能菜单项颜色
+        for (var i = 0; i < menuColumn.children.length; i++) {
+            var child = menuColumn.children[i]
+            if (child.pageInfo) {
+                var isActive = TeacherMgr.isPageActive(child.pageInfo.id)
+                child.color = isActive ? "#e8f5e8" : "white"
+            }
+        }
+    }
+
+    // 初始化
+    Component.onCompleted: {
+        contentLoader.source = "TeacherHome.qml"
+    }
+}

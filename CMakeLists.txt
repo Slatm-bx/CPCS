@@ -30,6 +30,20 @@ qt_add_qml_module(apppsychological
     QML_FILES SelfEvaluation.qml
     QML_FILES StudentHome.qml
     QML_FILES studentManager.js
+    QML_FILES teacherManager.js
+    QML_FILES TeacherHome.qml
+    QML_FILES ConsultationProcess.qml
+    QML_FILES ConsultationRecords.qml
+    QML_FILES StudentManagement.qml
+    QML_FILES ProfessionalResources.qml
+    QML_FILES adminManager.js
+    QML_FILES AdminHome.qml
+    QML_FILES AdminStudentManagement.qml
+    QML_FILES TeacherManagement.qml
+    QML_FILES PermissionManagement.qml
+    QML_FILES ConsultationSupervision.qml
+    QML_FILES MentalLiterature.qml
+    QML_FILES PsychologicalTests.qml
 )
 
 source_group("QML Files" FILES
@@ -43,11 +57,14 @@ source_group("Student Files" FILES
 )
 
 source_group("Teacher Files" FILES
-    TeacherPage.qml
+    TeacherPage.qml teacherManager.js TeacherHome.qml ConsultationProcess.qml
+    ConsultationRecords.qml StudentManagement.qml ProfessionalResources.qml
 )
 
 source_group("Admin Files" FILES
-    AdminPage.qml
+    AdminPage.qml adminManager.js AdminHome.qml AdminStudentManagement.qml
+    TeacherManagement.qml PermissionManagement.qml ConsultationSupervision.qml
+    MentalLiterature.qml
 )
 
 target_compile_features(apppsychological PRIVATE cxx_std_23)
