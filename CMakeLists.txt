@@ -22,6 +22,14 @@ qt_add_qml_module(apppsychological
     QML_FILES TeacherPage.qml
     QML_FILES AdminPage.qml
     QML_FILES pageswitching.js
+    QML_FILES CounselorChat.qml
+    QML_FILES ConsultationLog.qml
+    QML_FILES MentalHealthLibrary.qml
+    QML_FILES PersonalCenter.qml
+    QML_FILES MessageCenter.qml
+    QML_FILES SelfEvaluation.qml
+    QML_FILES StudentHome.qml
+    QML_FILES studentManager.js
 )
 
 source_group("QML Files" FILES
@@ -29,7 +37,9 @@ source_group("QML Files" FILES
 )
 
 source_group("Student Files" FILES
-    StudentPage.qml
+    StudentPage.qml CounselorChat.qml ConsultationLog.qml MentalHealthLibrary.qml
+    PersonalCenter.qml MessageCenter.qml SelfEvaluation.qml StudentHome.qml
+    studentManager.js
 )
 
 source_group("Teacher Files" FILES
