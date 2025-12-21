@@ -224,63 +224,29 @@ Rectangle {
                         }
 
                         // 按钮区域
-                        Row {
-                            width: parent.width
-                            spacing: 10
+                        Rectangle {
+                            width: (parent.width - 10)
+                            height: 34
+                            radius: 8
+                            color: "#4caf50"
 
-                            Rectangle {
-                                width: (parent.width - 10) / 2
-                                height: 34
-                                radius: 8
-                                color: model.status !== "离线" ? "#1976d2" : "#bdbdbd"
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "线上咨询"
-                                    color: "white"
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    enabled: model.status !== "离线"
-                                    onClicked: {
-                                        showAppointmentDialog = true
-                                        selectedCounselorForAppointment = {
-                                            name: model.name,
-                                            title: model.title,
-                                            avatar: model.avatar
-                                        }
-                                    }
-                                }
+                            Text {
+                                anchors.centerIn: parent
+                                text: "线下预约"
+                                color: "white"
+                                font.pixelSize: 13
+                                font.bold: true
                             }
 
-                            Rectangle {
-                                width: (parent.width - 10) / 2
-                                height: 34
-                                radius: 8
-                                color: "#4caf50"
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "线下预约"
-                                    color: "white"
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        showAppointmentDialog = true
-                                        selectedCounselorForAppointment = {
-                                            name: model.name,
-                                            title: model.title,
-                                            avatar: model.avatar
-                                        }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    showAppointmentDialog = true
+                                    selectedCounselorForAppointment = {
+                                        name: model.name,
+                                        title: model.title,
+                                        avatar: model.avatar
                                     }
                                 }
                             }
