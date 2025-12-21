@@ -7,8 +7,8 @@ var studentFunctions = [
     {id: "consultation_log", title: "咨询日志", icon: "📝", filePath: "ConsultationLog.qml"},
     {id: "health_library", title: "心理健康文献", icon: "📚", filePath: "MentalHealthLibrary.qml"},
     {id: "self_evaluation", title: "个人心理测试", icon: "📊", filePath: "SelfEvaluation.qml"},
-    {id: "personal_center", title: "个人中心", icon: "👤", filePath: "PersonalCenter.qml"},
-    {id: "message_center", title: "消息中心", icon: "✉️", filePath: "MessageCenter.qml"}
+    {id: "message_center", title: "消息中心", icon: "✉️", filePath: "MessageCenter.qml"},
+    {id: "personal_center", title: "个人中心", icon: "👤", filePath: "PersonalCenter.qml"}
 ]
 
 // 活动页面ID

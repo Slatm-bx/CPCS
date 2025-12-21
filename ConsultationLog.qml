@@ -174,239 +174,242 @@ Rectangle {
             }
         }
 
-        // 日志列表
-        ScrollView {
+        // 修改为 ListView
+        ListView {
+            id: logListView
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
+            spacing: 15  // 卡片间距
+            model: consultationLogModel
 
-            Column {
-                width: parent.width
-                spacing: 15  // 增加卡片间距
+            // 滚动条设置（在右侧显示）
+            ScrollBar.vertical: ScrollBar {
+                width: 8
+                policy: ScrollBar.AlwaysOn  // 总是显示滚动条
+                active: true
+            }
 
-                Repeater {
-                    model: consultationLogModel
+            delegate: Rectangle {
+                width: logListView.width
+                height: 160
+                radius: 10
+                color: "white"
+                border.color: "#c5cae9"
+                border.width: 1
 
-                    delegate: Rectangle {
-                        width: parent.width
-                        height: 160
-                        radius: 10
-                        color: "white"
-                        border.color: "#c5cae9"
-                        border.width: 1
+                Row {
+                    anchors.fill: parent
+                    anchors.margins: 15
+                    spacing: 20
 
+                    // 左侧：咨询信息
+                    Column {
+                        width: parent.width - 100
+                        spacing: 8
+
+                        // 第一行：基本信息
                         Row {
-                            anchors.fill: parent
-                            anchors.margins: 15
-                            spacing: 20
+                            width: parent.width
+                            spacing: 15
 
-                            // 左侧：咨询信息
+                            // 日期时间
                             Column {
-                                width: parent.width - 100
-                                spacing: 8
+                                spacing: 2
 
-                                // 第一行：基本信息
-                                Row {
-                                    width: parent.width
-                                    spacing: 15
-
-                                    // 日期时间
-                                    Column {
-                                        spacing: 2
-
-                                        Text {
-                                            text: model.date
-                                            font.pixelSize: 16
-                                            font.bold: true
-                                            color: "#5c6bc0"
-                                        }
-
-                                        Text {
-                                            text: model.time + " (" + model.duration + ")"
-                                            font.pixelSize: 12
-                                            color: "#666"
-                                        }
-                                    }
-
-                                    // 导师信息
-                                    Column {
-                                        spacing: 2
-
-                                        Text {
-                                            text: "导师：" + model.counselor
-                                            font.pixelSize: 14
-                                            color: "#333"
-                                        }
-
-                                        Text {
-                                            text: "类型：" + model.type
-                                            font.pixelSize: 12
-                                            color: "#666"
-                                        }
-                                    }
-
-                                    // 状态标签
-                                    Rectangle {
-                                        width: 60
-                                        height: 24
-                                        radius: 4
-                                        color: model.statusColor
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: model.status
-                                            color: "white"
-                                            font.pixelSize: 12
-                                            font.bold: true
-                                        }
-                                    }
+                                Text {
+                                    text: model.date
+                                    font.pixelSize: 16
+                                    font.bold: true
+                                    color: "#5c6bc0"
                                 }
 
-                                // 分割线
-                                Rectangle {
-                                    width: parent.width
-                                    height: 1
-                                    color: "#e0e0e0"
-                                }
-
-                                // 咨询摘要
-                                Column {
-                                    width: parent.width
-                                    spacing: 5
-
-                                    Text {
-                                        text: "咨询摘要："
-                                        font.pixelSize: 13
-                                        color: "#666"
-                                        font.bold: true
-                                    }
-
-                                    Text {
-                                        text: model.summary
-                                        font.pixelSize: 14
-                                        color: "#333"
-                                        width: parent.width
-                                        wrapMode: Text.WordWrap
-                                        maximumLineCount: 2
-                                        elide: Text.ElideRight
-                                    }
-                                }
-
-                                // 自我评价
-                                Column {
-                                    width: parent.width
-                                    spacing: 5
-                                    visible: model.evaluation !== ""
-
-                                    Text {
-                                        text: "自我评价："
-                                        font.pixelSize: 13
-                                        color: "#666"
-                                        font.bold: true
-                                    }
-
-                                    Text {
-                                        text: model.evaluation
-                                        font.pixelSize: 14
-                                        color: "#4caf50"
-                                        font.bold: true
-                                        width: parent.width
-                                        wrapMode: Text.WordWrap
-                                        maximumLineCount: 2
-                                        elide: Text.ElideRight
-                                    }
+                                Text {
+                                    text: model.time + " (" + model.duration + ")"
+                                    font.pixelSize: 12
+                                    color: "#666"
                                 }
                             }
 
-                            // 右侧：查看详情按钮
+                            // 导师信息
                             Column {
-                                width: 80
-                                spacing: 5
+                                spacing: 2
 
-                                // 查看详情按钮
-                                Rectangle {
-                                    width: 80
-                                    height: 36
-                                    radius: 8
-                                    color: "#5c6bc0"
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "查看详情"
-                                        color: "white"
-                                        font.pixelSize: 14
-                                        font.bold: true
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            console.log("查看咨询日志详情：" + model.logId)
-                                        }
-                                    }
+                                Text {
+                                    text: "导师：" + model.counselor
+                                    font.pixelSize: 14
+                                    color: "#333"
                                 }
 
-                                // 写评价按钮（仅对已完成且未评价的记录显示）
-                                Rectangle {
-                                    width: 80
-                                    height: 36
-                                    radius: 8
-                                    color: "#ff9800"
-                                    visible: model.status === "已完成" && model.evaluation === ""
+                                Text {
+                                    text: "类型：" + model.type
+                                    font.pixelSize: 12
+                                    color: "#666"
+                                }
+                            }
 
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "写评价"
-                                        color: "white"
-                                        font.pixelSize: 14
-                                        font.bold: true
-                                    }
+                            // 状态标签
+                            Rectangle {
+                                width: 60
+                                height: 24
+                                radius: 4
+                                color: model.statusColor
 
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            console.log("为咨询写评价：" + model.logId)
-                                        }
-                                    }
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: model.status
+                                    color: "white"
+                                    font.pixelSize: 12
+                                    font.bold: true
+                                }
+                            }
+                        }
+
+                        // 分割线
+                        Rectangle {
+                            width: parent.width
+                            height: 1
+                            color: "#e0e0e0"
+                        }
+
+                        // 咨询摘要
+                        Column {
+                            width: parent.width
+                            spacing: 5
+
+                            Text {
+                                text: "咨询摘要："
+                                font.pixelSize: 13
+                                color: "#666"
+                                font.bold: true
+                            }
+
+                            Text {
+                                text: model.summary
+                                font.pixelSize: 14
+                                color: "#333"
+                                width: parent.width
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        // 自我评价
+                        Column {
+                            width: parent.width
+                            spacing: 5
+                            visible: model.evaluation !== ""
+
+                            Text {
+                                text: "自我评价："
+                                font.pixelSize: 13
+                                color: "#666"
+                                font.bold: true
+                            }
+
+                            Text {
+                                text: model.evaluation
+                                font.pixelSize: 14
+                                color: "#4caf50"
+                                font.bold: true
+                                width: parent.width
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+
+                    // 右侧：查看详情按钮
+                    Column {
+                        width: 80
+                        spacing: 5
+
+                        // 查看详情按钮
+                        Rectangle {
+                            width: 80
+                            height: 36
+                            radius: 8
+                            color: "#5c6bc0"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "查看详情"
+                                color: "white"
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    console.log("查看咨询日志详情：" + model.logId)
+                                }
+                            }
+                        }
+
+                        // 写评价按钮（仅对已完成且未评价的记录显示）
+                        Rectangle {
+                            width: 80
+                            height: 36
+                            radius: 8
+                            color: "#ff9800"
+                            visible: model.status === "已完成" && model.evaluation === ""
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "写评价"
+                                color: "white"
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    console.log("为咨询写评价：" + model.logId)
                                 }
                             }
                         }
                     }
                 }
 
-                // 没有记录时的提示
-                Rectangle {
-                    width: parent.width
-                    height: 200
-                    radius: 10
-                    color: "white"
-                    border.color: "#c5cae9"
-                    border.width: 1
-                    visible: consultationLogModel.count === 0
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    // 可以添加点击事件
+                }
+            }
 
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 15
+            // 没有记录时的提示
+            footer: Rectangle {
+                width: logListView.width
+                height: 200
+                visible: consultationLogModel.count === 0
 
-                        Text {
-                            text: "📝"
-                            font.pixelSize: 40
-                        }
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 15
 
-                        Text {
-                            text: "暂无咨询记录"
-                            font.pixelSize: 18
-                            color: "#666"
-                            font.bold: true
-                        }
+                    Text {
+                        text: "📝"
+                        font.pixelSize: 40
+                    }
 
-                        Text {
-                            text: "快去预约一次心理咨询吧！"
-                            font.pixelSize: 14
-                            color: "#999"
-                        }
+                    Text {
+                        text: "暂无咨询记录"
+                        font.pixelSize: 18
+                        color: "#666"
+                        font.bold: true
+                    }
+
+                    Text {
+                        text: "快去预约一次心理咨询吧！"
+                        font.pixelSize: 14
+                        color: "#999"
                     }
                 }
             }
