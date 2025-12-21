@@ -488,6 +488,7 @@ Rectangle {
                 }
 
                 // 咨询类型选择
+                // 咨询类型选择 - 修改这部分
                 ColumnLayout {
                     spacing: 8
                     Layout.fillWidth: true
@@ -499,15 +500,20 @@ Rectangle {
                         color: "#333"
                     }
 
-                    Row {
+                    // 使用Flow或Grid代替Row
+                    Flow {
+                        id: consultationTypeFlow
                         Layout.fillWidth: true
                         spacing: 10
+
+                        // 计算每个项目的宽度
+                        property int itemWidth: (parent.width - 20) / 2
 
                         Repeater {
                             model: consultationTypesModel
 
                             Rectangle {
-                                width: (parent.width - 30) / 2
+                                width: consultationTypeFlow.itemWidth
                                 height: 45
                                 radius: 8
                                 color: selectedConsultationType === model.type ? "#e3f2fd" : "#f5f5f5"
@@ -515,20 +521,28 @@ Rectangle {
                                 border.width: 1
 
                                 Column {
-                                    anchors.centerIn: parent
+                                    anchors.fill: parent
+                                    anchors.margins: 5
                                     spacing: 2
 
                                     Text {
                                         text: model.type
-                                        font.pixelSize: 13
+                                        font.pixelSize: 12
                                         font.bold: true
                                         color: selectedConsultationType === model.type ? "#1976d2" : "#333"
+                                        width: parent.width
+                                        wrapMode: Text.Wrap
+                                        maximumLineCount: 2
+                                        elide: Text.ElideRight
+                                        horizontalAlignment: Text.AlignHCenter
                                     }
 
                                     Text {
                                         text: model.duration
-                                        font.pixelSize: 11
+                                        font.pixelSize: 10
                                         color: selectedConsultationType === model.type ? "#1976d2" : "#666"
+                                        width: parent.width
+                                        horizontalAlignment: Text.AlignHCenter
                                     }
                                 }
 
