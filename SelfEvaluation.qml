@@ -6,7 +6,58 @@ Rectangle {
     id: psychologicalAssessmentPage
     color: "#f8fcfd"  // 非常浅的蓝白色
 
-    // 模拟测试数据
+    // 测试界面状态
+    property bool isTesting: false
+    property string currentTestType: "" // "depression" 或 "anxiety"
+    property int currentQuestionIndex: 0
+    property var userAnswers: [] // 存储用户答案
+
+    // 抑郁测试题目数据 - 保持你原来的格式
+    ListModel {
+        id: depressionQuestions
+        ListElement {
+            questionId: 1
+            questionText: "做事时提不起兴趣或没有乐趣"
+            option1: "完全没有"; score1: 0
+            option2: "有几天"; score2: 1
+            option3: "一半以上的日子"; score3: 2
+            option4: "几乎每天"; score4: 3
+        }
+        ListElement {
+            questionId: 2
+            questionText: "感到心情低落、沮丧或绝望"
+            option1: "完全没有"; score1: 0
+            option2: "有几天"; score2: 1
+            option3: "一半以上的日子"; score3: 2
+            option4: "几乎每天"; score4: 3
+        }
+        ListElement {
+            questionId: 3
+            questionText: "入睡困难、睡不安稳或睡眠过多"
+            option1: "完全没有"; score1: 0
+            option2: "有几天"; score2: 1
+            option3: "一半以上的日子"; score3: 2
+            option4: "几乎每天"; score4: 3
+        }
+        ListElement {
+            questionId: 4
+            questionText: "感觉疲倦或没有精力"
+            option1: "完全没有"; score1: 0
+            option2: "有几天"; score2: 1
+            option3: "一半以上的日子"; score3: 2
+            option4: "几乎每天"; score4: 3
+        }
+        ListElement {
+            questionId: 5
+            questionText: "觉得自己很糟或很失败，或让家人失望"
+            option1: "完全没有"; score1: 0
+            option2: "有几天"; score2: 1
+            option3: "一半以上的日子"; score3: 2
+            option4: "几乎每天"; score4: 3
+        }
+    }
+
+    // 模拟测试数据 - 保持你原来的
     ListModel {
         id: testHistoryModel
         ListElement {
@@ -27,10 +78,87 @@ Rectangle {
         }
     }
 
+    // 开始测试函数
+    function startTest(testType) {
+        currentTestType = testType
+
+        // 初始化答案数组
+        userAnswers = []
+        for (var i = 0; i < depressionQuestions.count; i++) {
+            userAnswers.push(-1) // -1表示未选择
+        }
+
+        currentQuestionIndex = 0
+        isTesting = true
+    }
+
+    // 选择答案
+    function selectAnswer(score) {
+        userAnswers[currentQuestionIndex] = score
+    }
+
+    // 下一题
+    function nextQuestion() {
+        if (currentQuestionIndex < depressionQuestions.count - 1) {
+            currentQuestionIndex++
+        }
+    }
+
+    // 上一题
+    function previousQuestion() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--
+        }
+    }
+
+    // 提交测试
+    function submitTest() {
+        // 检查是否所有题目都答了
+        for (var i = 0; i < userAnswers.length; i++) {
+            if (userAnswers[i] === -1) {
+                console.log("第" + (i+1) + "题未作答")
+                return
+            }
+        }
+
+        // 计算总分
+        var totalScore = 0
+        for (var i = 0; i < userAnswers.length; i++) {
+            totalScore += userAnswers[i]
+        }
+
+        // 判断结果
+        var result = ""
+        if (totalScore <= 4) {
+            result = "轻度抑郁"
+        } else if (totalScore <= 9) {
+            result = "中度抑郁"
+        } else {
+            result = "重度抑郁"
+        }
+
+        console.log("测试完成！总分：" + totalScore + "分，结果：" + result)
+
+        // 添加到历史记录
+        testHistoryModel.insert(0, {
+            testName: "抑郁自评量表(SDS)",
+            testType: "抑郁测试",
+            date: new Date().toLocaleDateString(),
+            score: totalScore,
+            result: result,
+            status: "已完成"
+        })
+
+        // 返回主界面
+        isTesting = false
+    }
+
+    // 主界面 - 保持你原来的设计
     Column {
         anchors.fill: parent
         anchors.margins: 20
         spacing: 20
+        visible: !isTesting
 
         // 标题
         Text {
@@ -42,7 +170,7 @@ Rectangle {
             horizontalAlignment: Text.AlignLeft
         }
 
-        // 快速测试卡片
+        // 快速测试卡片 - 保持你原来的设计
         Rectangle {
             width: parent.width
             height: 140
@@ -69,7 +197,7 @@ Rectangle {
                     color: "#666"
                 }
 
-                // 测试类型选择
+                // 测试类型选择 - 保持你原来的设计
                 Row {
                     width: parent.width
                     height: 70
@@ -108,9 +236,7 @@ Rectangle {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             hoverEnabled: true
-                            onClicked: {
-                                console.log("开始抑郁测试")
-                            }
+                            onClicked: startTest("depression")
                         }
                     }
 
@@ -149,6 +275,7 @@ Rectangle {
                             hoverEnabled: true
                             onClicked: {
                                 console.log("开始焦虑测试")
+                                // 可以在这里添加焦虑测试的逻辑
                             }
                         }
                     }
@@ -156,7 +283,7 @@ Rectangle {
             }
         }
 
-        // 历史记录标题
+        // 历史记录标题 - 保持你原来的设计
         Row {
             width: parent.width
             height: 30
@@ -182,7 +309,7 @@ Rectangle {
             }
         }
 
-        // 历史记录列表
+        // 历史记录列表 - 保持你原来的设计
         ListView {
             width: parent.width
             height: parent.height - 220
@@ -324,7 +451,7 @@ Rectangle {
                 }
             }
 
-            // 空状态提示
+            // 空状态提示 - 保持你原来的设计
             Rectangle {
                 width: parent.width
                 height: 200
@@ -350,6 +477,386 @@ Rectangle {
                         text: "完成心理测试后会在这里显示历史记录"
                         font.pixelSize: 13
                         color: "#bbb"
+                    }
+                }
+            }
+        }
+    }
+
+    // 测试界面
+    Rectangle {
+        anchors.fill: parent
+        color: "#f8fcfd"
+        visible: isTesting
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 10
+
+            // 顶部标题栏 - 保持你原来的风格
+            Rectangle {
+                Layout.fillWidth: true
+                height: 60
+                color: "transparent"
+
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 15
+
+                    // 返回按钮
+                    Rectangle {
+                        width: 40
+                        height: 40
+                        radius: 8
+                        color: backMouseArea.containsMouse ? "#e8f4f8" : "white"
+                        border.color: "#b2dfdb"
+                        border.width: 1
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "←"
+                            font.pixelSize: 18
+                            color: "#2e7d8f"
+                        }
+
+                        MouseArea {
+                            id: backMouseArea
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
+                            onClicked: isTesting = false
+                        }
+                    }
+
+                    ColumnLayout {
+                        Text {
+                            text: "抑郁自评量表(SDS)"
+                            font.pixelSize: 18
+                            font.bold: true
+                            color: "#2e7d8f"
+                        }
+
+                        Text {
+                            text: "第" + (currentQuestionIndex + 1) + "/" + depressionQuestions.count + "题"
+                            font.pixelSize: 12
+                            color: "#888"
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+                }
+            }
+
+            // 进度条 - 保持你原来的风格
+            Rectangle {
+                Layout.fillWidth: true
+                height: 4
+                radius: 2
+                color: "#e0f2f1"
+
+                Rectangle {
+                    width: parent.width * ((currentQuestionIndex + 1) / depressionQuestions.count)
+                    height: parent.height
+                    radius: 2
+                    color: "#2e7d8f"
+                    Behavior on width { NumberAnimation { duration: 200 } }
+                }
+            }
+
+            // 问题卡片 - 保持你原来的风格
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 100
+                radius: 10
+                color: "white"
+                border.color: "#e0f2f1"
+                border.width: 1
+
+                Text {
+                    anchors.fill: parent
+                    anchors.margins: 20
+                    text: depressionQuestions.get(currentQuestionIndex).questionText
+                    font.pixelSize: 20
+                    color: "#333"
+                    wrapMode: Text.WordWrap
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+            // 在问题卡片后添加一个占位符控制间距
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 15  // 控制问题卡片和选项区域之间的间距
+            }
+
+            // 选项区域 - 保持你原来的风格
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 280  // 添加固定高度
+                spacing: 8
+
+                // 选项A
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 60
+                    radius: 10
+                    color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score1
+                           ? "#d0e4f0" : (option1MouseArea.containsMouse ? "#f5fafc" : "white")
+                    border.color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score1
+                                  ? "#2e7d8f" : "#b2dfdb"
+                    border.width: 2
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 15
+                        spacing: 15
+
+                        Rectangle {
+                            width: 30
+                            height: 30
+                            radius: 15
+                            color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score1
+                                   ? "#2e7d8f" : "#e0f2f1"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "A"
+                                color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score1
+                                       ? "white" : "#2e7d8f"
+                                font.bold: true
+                            }
+                        }
+
+                        Text {
+                            text: depressionQuestions.get(currentQuestionIndex).option1
+                            font.pixelSize: 16
+                            color: "#333"
+                        }
+
+                        Item { Layout.fillWidth: true }
+                    }
+
+                    MouseArea {
+                        id: option1MouseArea
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: selectAnswer(depressionQuestions.get(currentQuestionIndex).score1)
+                    }
+                }
+
+                // 选项B
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 60
+                    radius: 10
+                    color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score2
+                           ? "#d0e4f0" : (option2MouseArea.containsMouse ? "#f5fafc" : "white")
+                    border.color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score2
+                                  ? "#2e7d8f" : "#b2dfdb"
+                    border.width: 2
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 15
+                        spacing: 15
+
+                        Rectangle {
+                            width: 30
+                            height: 30
+                            radius: 15
+                            color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score2
+                                   ? "#2e7d8f" : "#e0f2f1"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "B"
+                                color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score2
+                                       ? "white" : "#2e7d8f"
+                                font.bold: true
+                            }
+                        }
+
+                        Text {
+                            text: depressionQuestions.get(currentQuestionIndex).option2
+                            font.pixelSize: 16
+                            color: "#333"
+                        }
+
+                        Item { Layout.fillWidth: true }
+                    }
+
+                    MouseArea {
+                        id: option2MouseArea
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: selectAnswer(depressionQuestions.get(currentQuestionIndex).score2)
+                    }
+                }
+
+                // 选项C
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 60
+                    radius: 10
+                    color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score3
+                           ? "#d0e4f0" : (option3MouseArea.containsMouse ? "#f5fafc" : "white")
+                    border.color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score3
+                                  ? "#2e7d8f" : "#b2dfdb"
+                    border.width: 2
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 15
+                        spacing: 15
+
+                        Rectangle {
+                            width: 30
+                            height: 30
+                            radius: 15
+                            color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score3
+                                   ? "#2e7d8f" : "#e0f2f1"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "C"
+                                color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score3
+                                       ? "white" : "#2e7d8f"
+                                font.bold: true
+                            }
+                        }
+
+                        Text {
+                            text: depressionQuestions.get(currentQuestionIndex).option3
+                            font.pixelSize: 16
+                            color: "#333"
+                        }
+
+                        Item { Layout.fillWidth: true }
+                    }
+
+                    MouseArea {
+                        id: option3MouseArea
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: selectAnswer(depressionQuestions.get(currentQuestionIndex).score3)
+                    }
+                }
+
+                // 选项D
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 60
+                    radius: 10
+                    color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score4
+                           ? "#d0e4f0" : (option4MouseArea.containsMouse ? "#f5fafc" : "white")
+                    border.color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score4
+                                  ? "#2e7d8f" : "#b2dfdb"
+                    border.width: 2
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 15
+                        spacing: 15
+
+                        Rectangle {
+                            width: 30
+                            height: 30
+                            radius: 15
+                            color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score4
+                                   ? "#2e7d8f" : "#e0f2f1"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "D"
+                                color: userAnswers[currentQuestionIndex] === depressionQuestions.get(currentQuestionIndex).score4
+                                       ? "white" : "#2e7d8f"
+                                font.bold: true
+                            }
+                        }
+
+                        Text {
+                            text: depressionQuestions.get(currentQuestionIndex).option4
+                            font.pixelSize: 16
+                            color: "#333"
+                        }
+
+                        Item { Layout.fillWidth: true }
+                    }
+
+                    MouseArea {
+                        id: option4MouseArea
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: selectAnswer(depressionQuestions.get(currentQuestionIndex).score4)
+                    }
+                }
+            }
+
+            // 底部按钮 - 保持你原来的风格
+            RowLayout {
+                Layout.fillWidth: true
+                height: 50
+                spacing: 15
+
+                // 上一题按钮
+                Rectangle {
+                    width: 100
+                    height: 45
+                    radius: 10
+                    color: prevMouseArea.containsMouse ? "#e8f4f8" : "white"
+                    border.color: "#b2dfdb"
+                    border.width: 1
+                    visible: currentQuestionIndex > 0
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "← 上一题"
+                        font.pixelSize: 14
+                        color: "#2e7d8f"
+                    }
+
+                    MouseArea {
+                        id: prevMouseArea
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: previousQuestion()
+                    }
+                }
+
+                Item { Layout.fillWidth: true }
+
+                // 下一题/提交按钮
+                Rectangle {
+                    width: 100
+                    height: 45
+                    radius: 10
+                    color: nextMouseArea.containsMouse ? "#3a8d9f" : "#2e7d8f"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: currentQuestionIndex < depressionQuestions.count - 1 ? "下一题 →" : "提交测试"
+                        font.pixelSize: 14
+                        color: "white"
+                        font.bold: true
+                    }
+
+                    MouseArea {
+                        id: nextMouseArea
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: {
+                            if (currentQuestionIndex < depressionQuestions.count - 1) {
+                                nextQuestion()
+                            } else {
+                                submitTest()
+                            }
+                        }
                     }
                 }
             }
