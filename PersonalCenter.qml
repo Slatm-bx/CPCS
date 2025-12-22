@@ -3,7 +3,7 @@ import QtQuick.Controls 2.15
 
 Rectangle {
     id: personalCenterPage
-    color: "#f5f7fa"  // 浅灰色背景，更专业
+    color: "#f5f7fa"
 
     // 用户数据
     property string studentName: "张三"
@@ -12,6 +12,9 @@ Rectangle {
     property string major: "软件工程"
     property string grade: "2023级"
     property string avatar: "👨‍🎓"
+
+    // 编辑弹窗状态
+    property bool showEditDialog: false
 
     ScrollView {
         anchors.fill: parent
@@ -40,7 +43,7 @@ Rectangle {
                         width: 90
                         height: 90
                         radius: 45
-                        color: "#e3f2fd"  // 浅蓝色背景
+                        color: "#e3f2fd"
                         anchors.horizontalCenter: parent.horizontalCenter
 
                         Text {
@@ -55,7 +58,7 @@ Rectangle {
                         text: personalCenterPage.studentName
                         font.pixelSize: 22
                         font.bold: true
-                        color: "#1976d2"  // 深蓝色
+                        color: "#1976d2"
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
 
@@ -177,7 +180,7 @@ Rectangle {
                             width: (parent.width - 12) / 2
                             height: 90
                             radius: 8
-                            color: "#e8f5e9"  // 浅绿色
+                            color: "#e8f5e9"
 
                             Column {
                                 anchors.centerIn: parent
@@ -192,7 +195,7 @@ Rectangle {
                                 Text {
                                     text: "心理咨询"
                                     font.pixelSize: 14
-                                    color: "#388e3c"  // 深绿色
+                                    color: "#388e3c"
                                     anchors.horizontalCenter: parent.horizontalCenter
                                 }
 
@@ -211,7 +214,7 @@ Rectangle {
                             width: (parent.width - 12) / 2
                             height: 90
                             radius: 8
-                            color: "#e3f2fd"  // 浅蓝色
+                            color: "#e3f2fd"
 
                             Column {
                                 anchors.centerIn: parent
@@ -226,7 +229,7 @@ Rectangle {
                                 Text {
                                     text: "心理测试"
                                     font.pixelSize: 14
-                                    color: "#1976d2"  // 深蓝色
+                                    color: "#1976d2"
                                     anchors.horizontalCenter: parent.horizontalCenter
                                 }
 
@@ -251,7 +254,7 @@ Rectangle {
                             width: (parent.width - 12) / 2
                             height: 90
                             radius: 8
-                            color: "#fff3e0"  // 浅橙色
+                            color: "#fff3e0"
 
                             Column {
                                 anchors.centerIn: parent
@@ -266,7 +269,7 @@ Rectangle {
                                 Text {
                                     text: "文献阅读"
                                     font.pixelSize: 14
-                                    color: "#f57c00"  // 深橙色
+                                    color: "#f57c00"
                                     anchors.horizontalCenter: parent.horizontalCenter
                                 }
 
@@ -285,7 +288,7 @@ Rectangle {
                             width: (parent.width - 12) / 2
                             height: 90
                             radius: 8
-                            color: "#f3e5f5"  // 浅紫色
+                            color: "#f3e5f5"
 
                             Column {
                                 anchors.centerIn: parent
@@ -300,7 +303,7 @@ Rectangle {
                                 Text {
                                     text: "咨询时长"
                                     font.pixelSize: 14
-                                    color: "#7b1fa2"  // 深紫色
+                                    color: "#7b1fa2"
                                     anchors.horizontalCenter: parent.horizontalCenter
                                 }
 
@@ -346,7 +349,296 @@ Rectangle {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        console.log("编辑个人资料")
+                        showEditDialog = true
+                    }
+                }
+            }
+        }
+    }
+
+    // 编辑资料弹窗
+    Rectangle {
+        id: editDialog
+        anchors.fill: parent
+        color: "#80000000"  // 半透明黑色背景
+        visible: showEditDialog
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                // 点击背景关闭弹窗
+            }
+        }
+
+        // 弹窗内容
+        Rectangle {
+            id: dialogContent
+            width: 400
+            height: 500
+            radius: 12
+            color: "white"
+            anchors.centerIn: parent
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 25
+                spacing: 15
+
+                // 标题
+                Text {
+                    text: "编辑个人资料"
+                    font.pixelSize: 20
+                    font.bold: true
+                    color: "#1976d2"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                // 姓名
+                Column {
+                    width: parent.width
+                    spacing: 5
+
+                    Text {
+                        text: "姓名"
+                        font.pixelSize: 14
+                        color: "#666"
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 40
+                        radius: 6
+                        border.color: "#ccc"
+                        border.width: 1
+
+                        TextInput {
+                            id: nameInput
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            text: personalCenterPage.studentName
+                            font.pixelSize: 16
+                            color: "#333"
+                            clip: true
+                        }
+                    }
+                }
+
+                // 学号
+                Column {
+                    width: parent.width
+                    spacing: 5
+
+                    Text {
+                        text: "学号"
+                        font.pixelSize: 14
+                        color: "#666"
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 40
+                        radius: 6
+                        border.color: "#ccc"
+                        border.width: 1
+
+                        TextInput {
+                            id: idInput
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            text: personalCenterPage.studentId
+                            font.pixelSize: 16
+                            color: "#333"
+                            clip: true
+                        }
+                    }
+                }
+
+                // 学院
+                Column {
+                    width: parent.width
+                    spacing: 5
+
+                    Text {
+                        text: "学院"
+                        font.pixelSize: 14
+                        color: "#666"
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 40
+                        radius: 6
+                        border.color: "#ccc"
+                        border.width: 1
+
+                        TextInput {
+                            id: collegeInput
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            text: personalCenterPage.college
+                            font.pixelSize: 16
+                            color: "#333"
+                            clip: true
+                        }
+                    }
+                }
+
+                // 专业
+                Column {
+                    width: parent.width
+                    spacing: 5
+
+                    Text {
+                        text: "专业"
+                        font.pixelSize: 14
+                        color: "#666"
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 40
+                        radius: 6
+                        border.color: "#ccc"
+                        border.width: 1
+
+                        TextInput {
+                            id: majorInput
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            text: personalCenterPage.major
+                            font.pixelSize: 16
+                            color: "#333"
+                            clip: true
+                        }
+                    }
+                }
+
+                // 年级
+                Column {
+                    width: parent.width
+                    spacing: 5
+
+                    Text {
+                        text: "年级"
+                        font.pixelSize: 14
+                        color: "#666"
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 40
+                        radius: 6
+                        border.color: "#ccc"
+                        border.width: 1
+
+                        TextInput {
+                            id: gradeInput
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            text: personalCenterPage.grade
+                            font.pixelSize: 16
+                            color: "#333"
+                            clip: true
+                        }
+                    }
+                }
+
+                // 头像
+                Column {
+                    width: parent.width
+                    spacing: 5
+
+                    Text {
+                        text: "头像表情"
+                        font.pixelSize: 14
+                        color: "#666"
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 40
+                        radius: 6
+                        border.color: "#ccc"
+                        border.width: 1
+
+                        TextInput {
+                            id: avatarInput
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            text: personalCenterPage.avatar
+                            font.pixelSize: 16
+                            color: "#333"
+                            clip: true
+                        }
+                    }
+                }
+
+                // 按钮区域
+                Row {
+                    width: parent.width
+                    height: 45
+                    spacing: 15
+
+                    // 取消按钮
+                    Rectangle {
+                        width: (parent.width - 15) / 2
+                        height: 45
+                        radius: 8
+                        color: cancelMouseArea.containsMouse ? "#f5f5f5" : "white"
+                        border.color: "#ccc"
+                        border.width: 1
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "取消"
+                            font.pixelSize: 16
+                            color: "#666"
+                        }
+
+                        MouseArea {
+                            id: cancelMouseArea
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
+                            onClicked: {
+                                showEditDialog = false
+                            }
+                        }
+                    }
+
+                    // 保存按钮
+                    Rectangle {
+                        width: (parent.width - 15) / 2
+                        height: 45
+                        radius: 8
+                        color: saveMouseArea.containsMouse ? "#1565c0" : "#1976d2"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "保存"
+                            font.pixelSize: 16
+                            color: "white"
+                            font.bold: true
+                        }
+
+                        MouseArea {
+                            id: saveMouseArea
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
+                            onClicked: {
+                                // 保存修改
+                                personalCenterPage.studentName = nameInput.text
+                                personalCenterPage.studentId = idInput.text
+                                personalCenterPage.college = collegeInput.text
+                                personalCenterPage.major = majorInput.text
+                                personalCenterPage.grade = gradeInput.text
+                                personalCenterPage.avatar = avatarInput.text
+
+                                showEditDialog = false
+                                console.log("个人资料已更新")
+                            }
+                        }
                     }
                 }
             }
