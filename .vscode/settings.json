@@ -1,0 +1,39 @@
+{
+  // CMake Tools: keep VS Code builds separate from Qt Creator builds
+  "cmake.buildDirectory": "${workspaceFolder}/build-vscode/${buildType}",
+
+  // Generator: Ninja is great, but only if you have it installed.
+  // If you haven't installed Ninja yet, this will fail; either install `ninja`
+  // or switch this to "Unix Makefiles".
+  "cmake.generator": "Unix Makefiles",
+
+  // Make clangd / tools happier
+  "cmake.configureSettings": {
+    "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+  },
+
+  // Qt from pacman typically installs CMake config under /usr/lib/cmake/Qt6
+  // Some setups also have /usr/lib64/cmake/Qt6. We pass both as prefix hints.
+  "cmake.configureArgs": [
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+    "-DCMAKE_PREFIX_PATH=/usr;/usr/lib;/usr/lib64",
+    "-DQt6_DIR=/usr/lib/cmake/Qt6"
+  ],
+
+  // Helps CMake Tools discover kits and reconfigure automatically
+  "cmake.configureOnOpen": true,
+
+  // QML formatting/hygiene
+  "files.associations": {
+    "*.qml": "qml",
+    "*.js": "javascript"
+  },
+
+  // Recommended: let CMake Tools drive IntelliSense (cpptools)
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+
+  // If you use clangd extension, it will pick up compile_commands.json
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/build-vscode/${buildType}"
+  ]
+}

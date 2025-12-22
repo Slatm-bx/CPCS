@@ -11,6 +11,7 @@ class DatabaseHandler; // 前向声明，避免循环依赖
 class UserModel : public QAbstractListModel
 {
     Q_OBJECT
+
 public:
 
     enum UserRoles {
@@ -29,13 +30,23 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    void runTests();
+
     // --- 功能函数 ---
     // Q_INVOKABLE 让这个函数可以在 QML 中被直接调用 (比如点击刷新按钮)
     Q_INVOKABLE void refresh();
+    Q_INVOKABLE void qmlAddUser(const QString& id, const QString& name, const QString& role, const QString& pwd);
+    Q_INVOKABLE void qmlUpdateUser(const QString& id, const QString& name, const QString& dept, const QString& statusText, const QString& newPwd);
+    Q_INVOKABLE void qmlSearchUser(const QString& keyword);
+    Q_INVOKABLE void qmlDeleteUser(const QString& userId);
+
+signals:
+
 
 private:
     QList<User*> m_users;
     DatabaseHandler *m_db; // 持有数据库处理器指针
+
 };
 
 #endif // USERMODEL_H

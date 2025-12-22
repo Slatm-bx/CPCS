@@ -9,6 +9,8 @@ UserModel::UserModel(DatabaseHandler *db, QObject *parent)
     if (m_db) {
         refresh();
     }
+
+    // runTests();
 }
 
 UserModel::~UserModel() {
@@ -26,6 +28,7 @@ void UserModel::refresh() {
     m_users.clear();
 
     m_users = m_db->getAllUsers();
+
     endResetModel(); // 3. 告诉 View：更新完毕，请重绘
 }
 
@@ -75,4 +78,64 @@ QHash<int, QByteArray> UserModel::roleNames() const
     roles[DeptRole] = "dept";
     roles[StatusRole] = "status";
     return roles;
+}
+
+
+void UserModel::qmlAddUser(const QString& id, const QString& name, const QString& role, const QString& pwd) {
+    // 1. 调用数据库执行插入
+    // 注意：这里为了简化，默认“学院/部门”先留空或复用 name 字段，实际弹窗里应该加一个输入框
+    if (m_db->addNewUser(id, name, pwd, role, "默认学院")) {
+        // 2. 插入成功后，自动刷新列表显示最新数据
+        refresh();
+    } else {
+        qDebug() << "添加失败";
+    }
+}
+
+void UserModel::qmlUpdateUser(const QString& id, const QString& name, const QString& dept, const QString& statusText, const QString& newPwd) {
+    int status = (statusText == "正常") ? 1 : 0;
+    if (m_db->updateUserInfo(id, name, dept, status, newPwd)) {
+        qDebug() << "更新成功，正在刷新列表";
+        refresh(); // 刷新列表
+    } else {
+        qDebug() << "UserModel.qmlUpdateUser的updateUserInfo失败";
+    }
+}
+
+void UserModel::qmlSearchUser(const QString& keyword) {
+    beginResetModel();
+    qDeleteAll(m_users); // 清理旧数据
+
+    // 如果关键字为空，查所有；否则查过滤
+    if (keyword.isEmpty()) {
+        m_users = m_db->getAllUsers();
+    } else {
+        m_users = m_db->searchUsers(keyword);
+    }
+
+    endResetModel();
+}
+
+void UserModel::qmlDeleteUser(const QString& userId) {
+    if (m_db->deleteUser(userId)) {
+        qDebug() << "✅ 删除用户成功:" << userId;
+        refresh(); // 刷新列表
+    } else {
+        qDebug() << "❌ 删除用户失败:" << userId;
+    }
+}
+
+void UserModel::runTests() {
+    qDebug() << "=== 开始测试 ===";
+    
+    qDebug() << "测试1: 添加新用户";
+    qmlAddUser("TEST001", "测试学生", "学生", "pwd123");
+    
+    qDebug() << "测试2: 更新用户信息";
+    qmlUpdateUser("TEST001", "测试学生更新", "新学院", "正常", "newpwd");
+    
+    // qDebug() << "测试3: 搜索用户";
+    // qmlSearchUser("测试");
+    
+    qDebug() << "=== 测试完成 ===";
 }

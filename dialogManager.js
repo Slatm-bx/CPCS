@@ -30,23 +30,18 @@ function validatePassword(newPass, confirmPass) {
     if (newPass && confirmPass && newPass !== confirmPass) {
         return { valid: false, message: "两次输入的密码不一致！" };
     }
-    
-    if (newPass && newPass.length < 6) {
-        return { valid: false, message: "新密码长度不能少于6个字符！" };
-    }
-    
     return { valid: true, message: "验证通过" };
 }
 
 // 更新用户密码
-function updateUserPassword(userId, newPassword) {
-    if (userDatabase[userId]) {
-        userDatabase[userId].password = newPassword;
-        console.log("密码已更新:", userId, "->", newPassword);
-        return true;
-    }
-    return false;
-}
+// function updateUserPassword(userId, newPassword) {
+//     if (userDatabase[userId]) {
+//         userDatabase[userId].password = newPassword;
+//         console.log("密码已更新:", userId, "->", newPassword);
+//         return true;
+//     }
+//     return false;
+// }
 
 // 搜索用户
 function searchUser(keyword, role) {

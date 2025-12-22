@@ -69,6 +69,7 @@ Rectangle {
 
                 onClicked: {
                     console.log("搜索关键字:", searchField.text)
+                    adminUserModel.qmlSearchUser(searchField.text)
                 }
             }
 
@@ -222,7 +223,7 @@ Rectangle {
 
                             Text {
                                 anchors.centerIn: parent
-                                text: model.status
+                                text: model.status === 1? "正常" :"封禁"
                                 font.pixelSize: 12
                                 color: model.statusActive ? "#27ae60" : "#ef4444"
                             }
@@ -244,26 +245,27 @@ Rectangle {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        showEditDialog(model.userId, model.userName, model.department)
+                                        showEditDialog(model.id, model.name, model.dept)
                                     }
                                 }
                             }
 
                             // 封禁
-                            Text {
-                                text: "🚫"
-                                font.pixelSize: 18
-                                color: "#f39c12"
+                            //Text {
+                            //    text: "🚫"
+                            //    font.pixelSize: 18
+                            //    color: "#f39c12"
 
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        console.log("封禁用户:", model.userId)
-                                    }
-                                }
-                            }
+                            //    MouseArea {
+                            //        anchors.fill: parent
+                            //        cursorShape: Qt.PointingHandCursor
+                            //        onClicked: {
+                            //            console.log("封禁用户:", model.userId)
+                            //        }
+                            //    }
+                            //}
 
+                            // 删除
                             // 删除
                             Text {
                                 text: "🗑️"
@@ -274,10 +276,11 @@ Rectangle {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        console.log("删除用户:", model.userId)
+                                        adminUserModel.qmlDeleteUser(model.id)
                                     }
                                 }
                             }
+
                         }
                     }
                 }

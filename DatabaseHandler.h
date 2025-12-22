@@ -24,11 +24,15 @@ public:
     Q_INVOKABLE QString getCurrentRole() const;
     Q_INVOKABLE void logout();
 
-    // --- CRUD 操作 ---
-    bool addStudent(const QString& userId, const QString& password, const QString& name, const QString& college);
+    // --- 用户CRUD 操作 ---
     QList<User*> getAllUsers();
-    bool updateUserStatus(const QString& userId, int newStatus);
     bool deleteUser(const QString& userId);
+    // 插入新用户 (同时写入 users 和 profile 表)
+    bool addNewUser(const QString& id, const QString& name, const QString& pwd, const QString& role, const QString& dept);
+    // 更新用户信息
+    bool updateUserInfo(const QString& id, const QString& name, const QString& dept, int status, const QString& newPwd = "");
+    // 搜索用户 (支持 ID 或 姓名)
+    QList<User*> searchUsers(const QString& keyword);
 
 private:
     bool openDatabase();

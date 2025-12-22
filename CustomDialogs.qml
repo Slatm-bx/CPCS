@@ -118,6 +118,15 @@ Item {
                     
                     onClicked: {
                         console.log("创建账户:", newUserId.text, newUserName.text)
+                        // 调用 C++ 接口
+                        // 注意：你需要确保 CustomDialogs 能访问到 adminUserModel
+                        // 或者在 main.qml 里把 model 传进来
+                        adminUserModel.qmlAddUser(
+                            newUserId.text,
+                            newUserName.text,
+                            newUserRole.currentText,
+                            newUserPassword.text
+                        )
                         addUserDialog.close()
                     }
                 }
@@ -222,50 +231,50 @@ Item {
                 }
                 
                 // 当前密码
-                ColumnLayout {
-                    spacing: 5
+                // ColumnLayout {
+                //     spacing: 5
                     
-                    Text { text: "当前密码"; font.pixelSize: 13 }
+                //     Text { text: "当前密码"; font.pixelSize: 13 }
                     
-                    RowLayout {
-                        spacing: 10
+                //     RowLayout {
+                //         spacing: 10
                         
-                        TextField {
-                            id: currentPasswordField
-                            Layout.fillWidth: true
-                            placeholderText: "点击按钮查看"
-                            enabled: false
-                            echoMode: showPasswordBtn.checked ? TextInput.Normal : TextInput.Password
+                        // TextField {
+                        //     id: currentPasswordField
+                        //     Layout.fillWidth: true
+                        //     placeholderText: "点击按钮查看"
+                        //     enabled: false
+                        //     echoMode: showPasswordBtn.checked ? TextInput.Normal : TextInput.Password
                             
-                            background: Rectangle {
-                                color: "#f5f5f5"
-                                border.color: "#ddd"
-                                border.width: 1
-                                radius: 4
-                            }
-                        }
+                        //     background: Rectangle {
+                        //         color: "#f5f5f5"
+                        //         border.color: "#ddd"
+                        //         border.width: 1
+                        //         radius: 4
+                        //     }
+                        // }
                         
-                        Button {
-                            id: showPasswordBtn
-                            text: checked ? "👁️ 隐藏" : "👁️ 查看"
-                            checkable: true
+                        // Button {
+                        //     id: showPasswordBtn
+                        //     text: checked ? "👁️ 隐藏" : "👁️ 查看"
+                        //     checkable: true
                             
-                            background: Rectangle {
-                                color: parent.pressed ? "#2980b9" : "#3498db"
-                                radius: 4
-                            }
+                        //     background: Rectangle {
+                        //         color: parent.pressed ? "#2980b9" : "#3498db"
+                        //         radius: 4
+                        //     }
                             
-                            onCheckedChanged: {
-                                if (checked) {
-                                    // 模拟显示密码
-                                    currentPasswordField.text = "123456"
-                                } else {
-                                    currentPasswordField.text = ""
-                                }
-                            }
-                        }
-                    }
-                }
+                        //     onCheckedChanged: {
+                        //         if (checked) {
+                        //             // 模拟显示密码
+                        //             currentPasswordField.text = adminUserModel.password
+                        //         } else {
+                        //             currentPasswordField.text = ""
+                        //         }
+                        //     }
+                        // }
+                //     }
+                // }
                 
                 // 新密码
                 ColumnLayout {
@@ -366,12 +375,20 @@ Item {
                             }
                             
                             // 更新密码
-                            if (newPasswordField.text) {
-                                DialogManager.updateUserPassword(editUserId.text, newPasswordField.text);
-                            }
+                            // if (newPasswordField.text) {
+                            //     DialogManager.updateUserPassword(editUserId.text, newPasswordField.text);
+                            // }
                             
                             console.log("更新账户:", editUserId.text);
-                            editUserDialog.close();
+                            // 调用 C++ 接口更新
+                            adminUserModel.qmlUpdateUser(
+                                editUserId.text,       // ID
+                                editUserName.text,     // 姓名
+                                editUserDept.text,     // 部门
+                                editUserStatus.currentText, // 状态文本 ("正常"/"封禁")
+                                newPasswordField.text  // 新密码 (为空则不改)
+                            )
+                            editUserDialog.close()
                         }
                     }
                 }
