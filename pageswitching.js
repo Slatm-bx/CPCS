@@ -4,7 +4,6 @@
 // 获取主窗口对象
 var mainWindow = null
 var stackView = null
-var currentRole = ""
 
 // 初始化函数
 function initialize(window, stack) {
@@ -15,7 +14,6 @@ function initialize(window, stack) {
 // 窗口居中函数
 function centerWindow() {
     if (mainWindow) {
-        // 通过mainWindow的父级或直接计算
         var screenWidth = mainWindow.screen ? mainWindow.screen.desktopAvailableWidth : 1920
         var screenHeight = mainWindow.screen ? mainWindow.screen.desktopAvailableHeight : 1080
 
@@ -24,12 +22,10 @@ function centerWindow() {
     }
 }
 
-
 // 登录成功跳转
 function loginSuccess(role) {
     if (!mainWindow || !stackView) return
 
-    currentRole = role
     mainWindow.width = 1820
     mainWindow.height = 1024
 
@@ -51,15 +47,30 @@ function loginSuccess(role) {
 function logout() {
     if (!mainWindow || !stackView) return
 
+    // 清除数据库中的登录状态
+    if (typeof databaseHandler !== 'undefined') {
+        databaseHandler.logout()
+    }
+
     mainWindow.width = 600
     mainWindow.height = 800
-    currentRole = ""
     stackView.clear()
     stackView.push("Login.qml")
     centerWindow()
 }
 
+// 获取当前登录的用户ID
+function getCurrentUserId() {
+    if (typeof databaseHandler !== 'undefined') {
+        return databaseHandler.getCurrentUserId()
+    }
+    return ""
+}
+
 // 获取当前角色
 function getCurrentRole() {
-    return currentRole
+    if (typeof databaseHandler !== 'undefined') {
+        return databaseHandler.getCurrentRole()
+    }
+    return ""
 }

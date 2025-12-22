@@ -202,51 +202,68 @@ Rectangle {
                     }
                 }
 
-                // 登录按钮
-                Button {
-                    id: loginButton
-                    Layout.fillWidth: true
-                    Layout.topMargin: 10
-                    height: 52
-                    text: "登  录"
-                    font.pixelSize: 20
-                    font.bold: true
-                    hoverEnabled: true
+            // 登录按钮
+                  Button {
+                      id: loginButton
+                      Layout.fillWidth: true
+                      Layout.topMargin: 10
+                      height: 52
+                      text: "登  录"
+                      font.pixelSize: 20
+                      font.bold: true
+                      hoverEnabled: true
 
-                    background: Rectangle {
-                        radius: 10
-                        color: loginButton.down ? "#2980b9" : (loginButton.hovered ? "#5dade2" : "#3498db")
-                        opacity: loginButton.enabled ? 1 : 0.6
-                    }
+                      background: Rectangle {
+                          radius: 10
+                          color: loginButton.down ? "#2980b9" : (loginButton.hovered ? "#5dade2" : "#3498db")
+                          opacity: loginButton.enabled ? 1 : 0.6
+                      }
 
-                    contentItem: Text {
-                        text: loginButton.text
-                        font: loginButton.font
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
+                      contentItem: Text {
+                          text: loginButton.text
+                          font: loginButton.font
+                          color: "white"
+                          horizontalAlignment: Text.AlignHCenter
+                          verticalAlignment: Text.AlignVCenter
+                      }
 
-                    onClicked: {
-                        // 获取选择的角色
-                        var role = ""
-                        if (studentRadio.checked) role = "student"
-                        else if (teacherRadio.checked) role = "teacher"
-                        else if (adminRadio.checked) role = "admin"
+                      onClicked: {
+                         // 获取输入的账号密码
+                         var userId = usernameInput.text.trim()
+                         var password = passwordInput.text.trim()
 
-                        // 检查是否有输入
-                        if (usernameInput.text.trim() === "" || passwordInput.text.trim() === "") {
-                            errorText.text = "请输入账号和密码"
-                            errorText.visible = true
-                            return
-                        }
+                         // 获取选择的角色
+                         var role = ""
+                         if (studentRadio.checked) role = "student"
+                         else if (teacherRadio.checked) role = "teacher"
+                         else if (adminRadio.checked) role = "admin"
 
-                        // 直接调用JavaScript函数 - 这是关键修改
-                        Pages.loginSuccess(role)
-                    }
-                }
-            }
-        }
+                         // 检查是否有输入
+                         if (userId === "" || password === "") {
+                             errorText.text = "请输入账号和密码"
+                             errorText.visible = true
+                             return
+                         }
+
+                         // 禁用登录按钮防止重复点击
+                         loginButton.enabled = false
+
+                         // 调用C++的数据库处理器
+                         var loginResult = databaseHandler.verifyLogin(userId, password, role)
+
+                         if (loginResult.success) {
+                             // 登录成功，跳转到对应页面
+                             Pages.loginSuccess(role)
+                         } else {
+                             // 登录失败，显示错误信息
+                             errorText.text = loginResult.message || "登录失败"
+                             errorText.visible = true
+                             loginButton.enabled = true
+                         }
+                     }
+                 }
+              }
+          }
 
         // 错误提示
         Text {
@@ -258,11 +275,11 @@ Rectangle {
             font.bold: true
         }
 
-        // 底部提示
+        // 底部提示 - 修改为实际提示
         Text {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 5
-            text: "提示：输入任意账号密码即可登录"
+            text: "提示：请输入正确的账号和密码登录"
             color: "#95a5a6"
             font.pixelSize: 13
         }
@@ -273,6 +290,7 @@ Rectangle {
         target: usernameInput
         function onTextChanged() {
             errorText.visible = false
+            loginButton.enabled = true
         }
     }
 
@@ -280,6 +298,7 @@ Rectangle {
         target: passwordInput
         function onTextChanged() {
             errorText.visible = false
+            loginButton.enabled = true
         }
     }
 }

@@ -4,7 +4,7 @@ project(psychological VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Quick Sql)
 
 qt_standard_project_setup(REQUIRES 6.9) #set(CMAKE_AUTOUIC ON)  set(CMAKE_AUTOMOC ON)
 
@@ -44,6 +44,9 @@ qt_add_qml_module(apppsychological
     QML_FILES ConsultationSupervision.qml
     QML_FILES MentalLiterature.qml
     QML_FILES PsychologicalTests.qml
+    QML_FILES
+    SOURCES DatabaseHandler.h
+    SOURCES DatabaseHandler.cpp
 )
 
 source_group("QML Files" FILES
@@ -72,6 +75,7 @@ target_compile_features(apppsychological PRIVATE cxx_std_23)
 target_link_libraries(apppsychological
     PRIVATE
         Qt6::Quick
+        Qt6::Sql
 )
 
 set_target_properties(apppsychological PROPERTIES
