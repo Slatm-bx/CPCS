@@ -34,19 +34,19 @@ qt_add_qml_module(apppsychological
     QML_FILES TeacherHome.qml
     QML_FILES ConsultationProcess.qml
     QML_FILES ConsultationRecords.qml
-    QML_FILES StudentManagement.qml
     QML_FILES ProfessionalResources.qml
     QML_FILES adminManager.js
     QML_FILES AdminHome.qml
-    QML_FILES AdminStudentManagement.qml
-    QML_FILES TeacherManagement.qml
-    QML_FILES PermissionManagement.qml
+    QML_FILES UserManagement.qml
     QML_FILES ConsultationSupervision.qml
     QML_FILES MentalLiterature.qml
     QML_FILES PsychologicalTests.qml
-    QML_FILES
     SOURCES DatabaseHandler.h
     SOURCES DatabaseHandler.cpp
+    # SOURCES databasemanager.h databasemanager.cpp
+    SOURCES user.h user.cpp usermodel.cpp usermodel.h teacher.h teacher.cpp student.cpp student.h
+    QML_FILES CustomDialogs.qml
+    QML_FILES dialogManager.js
 )
 
 source_group("QML Files" FILES
@@ -65,9 +65,9 @@ source_group("Teacher Files" FILES
 )
 
 source_group("Admin Files" FILES
-    AdminPage.qml adminManager.js AdminHome.qml AdminStudentManagement.qml
-    TeacherManagement.qml PermissionManagement.qml ConsultationSupervision.qml
-    MentalLiterature.qml
+    AdminPage.qml adminManager.js AdminHome.qml
+    ConsultationSupervision.qml UserManagement.qml
+    MentalLiterature.qml  CustomDialogs.qml dialogManager.js
 )
 
 target_compile_features(apppsychological PRIVATE cxx_std_23)

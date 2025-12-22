@@ -3,9 +3,7 @@
 
 // 管理员功能列表
 var adminFunctions = [
-    {id: "student_management", title: "学生管理", icon: "👥", filePath: "AdminStudentManagement.qml"},
-    {id: "teacher_management", title: "教师管理", icon: "👨‍🏫", filePath: "TeacherManagement.qml"},
-    {id: "permission_management", title: "权限管理", icon: "🔒", filePath: "PermissionManagement.qml"},
+    {id: "student_management", title: "用户管理", icon: "👥", filePath: "UserManagement.qml"},
     {id: "consultation_supervision", title: "咨询监管", icon: "👁️", filePath: "ConsultationSupervision.qml"},
     {id: "mental_literature", title: "心理文献", icon: "📚", filePath: "MentalLiterature.qml"},
     {id: "psychological_tests", title: "心理测试", icon: "📊", filePath: "PsychologicalTests.qml"}

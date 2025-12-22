@@ -2,6 +2,8 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include "DatabaseHandler.h"
+#include "usermodel.h"
+
 
 int main(int argc, char *argv[])
 {
@@ -12,6 +14,11 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     // 将数据库处理器暴露给QML
     engine.rootContext()->setContextProperty("databaseHandler", &dbHandler);
+
+    // 创建并暴露用户模型给QML
+    UserModel userModel(&dbHandler);
+    engine.rootContext()->setContextProperty("adminUserModel", &userModel);
+
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,

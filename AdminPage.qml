@@ -8,6 +8,11 @@ Rectangle {
     id: adminPage
     color: "#f8f9fa"
 
+    signal showAddUserDialog()
+    signal showEditUserDialog(string userId, string userName, string userDept)
+    signal showSurveyDialog()
+    signal showArticleDialog()
+
     // 第一行：顶部标题栏
     Rectangle {
         id: header
@@ -277,6 +282,25 @@ Rectangle {
                         source = "AdminHome.qml"
                     }
                 }
+
+                // 监听加载页面的信号并转发给 AdminPage
+                Connections {
+                    target: contentLoader.item
+                    ignoreUnknownSignals: true
+                    
+                    function onShowAddDialog() {
+                        adminPage.showAddUserDialog()
+                    }
+                    function onShowEditDialog(userId, userName, userDept) {
+                        adminPage.showEditUserDialog(userId, userName, userDept)
+                    }
+                    function onShowArticleDialog() {
+                        adminPage.showArticleDialog()
+                    }
+                    function onShowSurveyDialog() {
+                        adminPage.showSurveyDialog()
+                    }
+                }
             }
         }
     }
@@ -308,5 +332,28 @@ Rectangle {
     // 初始化
     Component.onCompleted: {
         contentLoader.source = "AdminHome.qml"
+    }
+
+    // 弹窗管理器
+    CustomDialogs {
+        id: dialogs
+        parentWindow:adminPage
+    }
+
+    // 连接信号到弹窗
+    Connections {
+        target: adminPage
+        function onShowAddUserDialog() {
+            dialogs.openAddUserDialog()
+        }
+        function onShowEditUserDialog(userId, userName, userDept) {
+            dialogs.openEditUserDialog(userId, userName, userDept)
+        }
+        function onShowSurveyDialog() {
+            dialogs.openSurveyDialog()
+        }
+        function onShowArticleDialog() {
+            dialogs.openArticleDialog()
+        }
     }
 }
