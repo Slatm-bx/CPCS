@@ -9,7 +9,7 @@ Rectangle {
     color: "#f8f9fa"
 
     signal showAddUserDialog()
-    signal showEditUserDialog(string userId, string userName, string userDept)
+    signal showEditUserDialog(string userId, string userName, string userDept, string userRole, string gender, string entryYear)
     signal showSurveyDialog()
     signal showArticleDialog()
 
@@ -286,17 +286,23 @@ Rectangle {
                 // 监听加载页面的信号并转发给 AdminPage
                 Connections {
                     target: contentLoader.item
-                    ignoreUnknownSignals: true
-                    
+
                     function onShowAddDialog() {
                         adminPage.showAddUserDialog()
                     }
-                    function onShowEditDialog(userId, userName, userDept) {
-                        adminPage.showEditUserDialog(userId, userName, userDept)
+
+                    function onShowEditDialog(userId, userName, userDept, userRole, gender, entryYear) {
+                        adminPage.showEditUserDialog(userId, userName, userDept, userRole, gender, entryYear)
                     }
+
                     function onShowArticleDialog() {
                         adminPage.showArticleDialog()
                     }
+
+                    function onShowEditArticleDialog(articleId, title, summary, content) {
+                        dialogs.openEditArticleDialog(articleId, title, summary, content)
+                    }
+
                     function onShowSurveyDialog() {
                         adminPage.showSurveyDialog()
                     }
@@ -340,14 +346,26 @@ Rectangle {
         parentWindow:adminPage
     }
 
-    // 连接信号到弹窗
+    // 监听文章发布信号，刷新列表
+    Connections {
+        target: dialogs
+
+        function onArticlePublished() {
+            // 如果当前加载的是 MentalLiterature 页面，刷新它
+            if (contentLoader.item && contentLoader.item.refreshArticles) {
+                contentLoader.item.refreshArticles()
+            }
+        }
+    }
+
+    // 连接信号到弹窗}
     Connections {
         target: adminPage
         function onShowAddUserDialog() {
             dialogs.openAddUserDialog()
         }
-        function onShowEditUserDialog(userId, userName, userDept) {
-            dialogs.openEditUserDialog(userId, userName, userDept)
+        function onShowEditUserDialog(userId, userName, userDept, userRole, gender, entryYear) {
+            dialogs.openEditUserDialog(userId, userName, userDept, userRole, gender, entryYear)
         }
         function onShowSurveyDialog() {
             dialogs.openSurveyDialog()

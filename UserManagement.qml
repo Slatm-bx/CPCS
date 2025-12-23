@@ -10,7 +10,7 @@ Rectangle {
 
     // 信号：显示弹窗
     signal showAddDialog()
-    signal showEditDialog(string userId, string userName, string dept)
+    signal showEditDialog(string userId, string userName, string dept, string userRole, string gender, string entryYear)
 
     ColumnLayout {
         anchors.fill: parent
@@ -245,7 +245,7 @@ Rectangle {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        showEditDialog(model.id, model.name, model.dept)
+                                        showEditDialog(model.id, model.name, model.dept, model.role, model.gender, model.entryYear)
                                     }
                                 }
                             }

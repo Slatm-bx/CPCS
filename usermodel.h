@@ -20,7 +20,9 @@ public:
         PasswordRole,
         RoleRole,
         DeptRole,    // 对应 学院(学生) 或 部门(老师)
-        StatusRole
+        StatusRole,
+        GenderRole,     // 性别 (仅学生)
+        EntryYearRole   // 入学年份 (仅学生)
     };
     explicit UserModel(DatabaseHandler *db, QObject *parent = nullptr);
     ~UserModel();
@@ -35,8 +37,8 @@ public:
     // --- 功能函数 ---
     // Q_INVOKABLE 让这个函数可以在 QML 中被直接调用 (比如点击刷新按钮)
     Q_INVOKABLE void refresh();
-    Q_INVOKABLE void qmlAddUser(const QString& id, const QString& name, const QString& role, const QString& pwd);
-    Q_INVOKABLE void qmlUpdateUser(const QString& id, const QString& name, const QString& dept, const QString& statusText, const QString& newPwd);
+    Q_INVOKABLE void qmlAddUser(const QString& id, const QString& name, const QString& role, const QString& pwd, const QString& dept="", const QString& gender="", const QString& entryYear="");
+    Q_INVOKABLE void qmlUpdateUser(const QString& id, const QString& name, const QString& dept, const QString& statusText, const QString& newPwd, const QString& gender="", const QString& entryYear="");
     Q_INVOKABLE void qmlSearchUser(const QString& keyword);
     Q_INVOKABLE void qmlDeleteUser(const QString& userId);
 

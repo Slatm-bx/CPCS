@@ -24,15 +24,25 @@ public:
     Q_INVOKABLE QString getCurrentRole() const;
     Q_INVOKABLE void logout();
 
-    // --- 用户CRUD 操作 ---
+    // --- 管理员用户CRUD 操作 ---
     QList<User*> getAllUsers();
     bool deleteUser(const QString& userId);
     // 插入新用户 (同时写入 users 和 profile 表)
-    bool addNewUser(const QString& id, const QString& name, const QString& pwd, const QString& role, const QString& dept);
+    bool addNewUser(const QString& id, const QString& name, const QString& pwd, const QString& role, const QString& dept, const QString& gender = "", const QString& entryYear = "");
     // 更新用户信息
-    bool updateUserInfo(const QString& id, const QString& name, const QString& dept, int status, const QString& newPwd = "");
+    bool updateUserInfo(const QString& id, const QString& name, const QString& dept, int status, const QString& newPwd = "", const QString& gender = "", const QString& entryYear = "");
     // 搜索用户 (支持 ID 或 姓名)
     QList<User*> searchUsers(const QString& keyword);
+
+    // --- 管理员文章CRUD 操作 (QVariantList方式) ---
+    Q_INVOKABLE QVariantList getAllArticles();
+    Q_INVOKABLE bool addArticle(const QString& title, const QString& summary,
+                                const QString& author, const QString& content);
+    Q_INVOKABLE bool updateArticle(int articleId, const QString& title,
+                                   const QString& summary, const QString& content);
+    Q_INVOKABLE bool deleteArticle(int articleId);
+    Q_INVOKABLE QVariantMap getArticleById(int articleId);
+
 
     // --------学生用户添加的操作--------
     // 新增：获取当前用户姓名

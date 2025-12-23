@@ -103,7 +103,8 @@ void DatabaseHandler::logout()
     m_currentRole.clear();
 }
 
-
+//-----------  管理员数据库操作 ---------
+//----------- 管理员用户管理操作 --------
 // 2. 【查】查询并输出所有用户信息（关联查询）
 QList<User*> DatabaseHandler::getAllUsers() {
     // QSqlQuery query("SELECT u.user_id, u.role_type, u.status, s.real_name, s.college "
@@ -111,11 +112,11 @@ QList<User*> DatabaseHandler::getAllUsers() {
     //                 "LEFT JOIN student_profiles s ON u.user_id = s.user_id");
     QList<User*> list;
     QString sql = "SELECT u.user_id, u.password, u.role_type, u.status, "
-                    "s.real_name AS s_name, s.college, "
-                    "t.real_name AS t_name, t.department "
-                    "FROM users u "
-                    "LEFT JOIN student_profiles s ON u.user_id = s.user_id "
-                    "LEFT JOIN teacher_profiles t ON u.user_id = t.user_id;";
+                  "s.real_name AS s_name, s.college, s.gender, s.entry_year, "
+                  "t.real_name AS t_name, t.department "
+                  "FROM users u "
+                  "LEFT JOIN student_profiles s ON u.user_id = s.user_id "
+                  "LEFT JOIN teacher_profiles t ON u.user_id = t.user_id;";
 
     QSqlQuery query(m_database);
     if (!query.exec(sql)) {
@@ -132,6 +133,8 @@ QList<User*> DatabaseHandler::getAllUsers() {
             Student* s = new Student();
             s->setRealName(query.value("s_name").toString());
             s->setCollege(query.value("college").toString());
+            s->setGender(query.value("gender").toString());
+            s->setEntryYear(query.value("entry_year").toString());
             user = s;
         } else if (role == "teacher") {
             Teacher* t = new Teacher();
@@ -169,7 +172,7 @@ QList<User*> DatabaseHandler::getAllUsers() {
 }
 
 
-bool DatabaseHandler::addNewUser(const QString& id, const QString& name, const QString& pwd, const QString& role, const QString& dept) {
+bool DatabaseHandler::addNewUser(const QString& id, const QString& name, const QString& pwd, const QString& role, const QString& dept, const QString& gender, const QString& entryYear) {
     if (!m_database.isOpen()) {
         qDebug() << "数据库未打开";
         return false;
@@ -202,12 +205,17 @@ bool DatabaseHandler::addNewUser(const QString& id, const QString& name, const Q
     // 2. 插入详情表 (根据角色判断)
     if (role == "老师") {
         query.prepare("INSERT INTO teacher_profiles (user_id, real_name, department) VALUES (?, ?, ?)");
+        query.addBindValue(id);
+        query.addBindValue(name);
+        query.addBindValue(dept);
     } else {
-        query.prepare("INSERT INTO student_profiles (user_id, real_name, college) VALUES (?, ?, ?)");
+        query.prepare("INSERT INTO student_profiles (user_id, real_name, college, gender, entry_year) VALUES (?, ?, ?, ?, ?)");
+        query.addBindValue(id);
+        query.addBindValue(name);
+        query.addBindValue(dept);
+        query.addBindValue(gender);
+        query.addBindValue(entryYear);
     }
-    query.addBindValue(id);
-    query.addBindValue(name);
-    query.addBindValue(dept);
 
     if (!query.exec()) {
         qDebug() << "插入详情表失败:" << query.lastError().text();
@@ -220,7 +228,7 @@ bool DatabaseHandler::addNewUser(const QString& id, const QString& name, const Q
     return true;
 }
 
-bool DatabaseHandler::updateUserInfo(const QString& id, const QString& name, const QString& dept, int status, const QString& newPwd) {
+bool DatabaseHandler::updateUserInfo(const QString& id, const QString& name, const QString& dept, int status, const QString& newPwd, const QString& gender, const QString& entryYear) {
     m_database.transaction();
     QSqlQuery query(m_database);
 
@@ -234,24 +242,26 @@ bool DatabaseHandler::updateUserInfo(const QString& id, const QString& name, con
     if (!newPwd.isEmpty()) query.addBindValue(newPwd);
     query.addBindValue(id);
 
-    if (!query.exec()) { 
+    if (!query.exec()) {
         qDebug() << " 更新 users 表失败:" << query.lastError().text();
         qDebug() << "   SQL:" << query.executedQuery();
-        m_database.rollback(); 
-        return false; 
+        m_database.rollback();
+        return false;
     }
-    qDebug() << "✅ users 表更新成功";
+    qDebug() << "users 表更新成功";
 
     // 2. 更新详情表 (先尝试更新学生表，再尝试更新老师表)
-    query.prepare("UPDATE student_profiles SET real_name = ?, college = ? WHERE user_id = ?");
+    query.prepare("UPDATE student_profiles SET real_name = ?, college = ?, gender = ?, entry_year = ? WHERE user_id = ?");
     query.addBindValue(name);
     query.addBindValue(dept);
+    query.addBindValue(gender);
+    query.addBindValue(entryYear);
     query.addBindValue(id);
     bool studentUpdated = query.exec();
     if (!studentUpdated) {
         qDebug() << "更新 student_profiles 失败或该用户不是学生:" << query.lastError().text();
     }
-    
+
     query.prepare("UPDATE teacher_profiles SET real_name = ?, department = ? WHERE user_id = ?");
     query.addBindValue(name);
     query.addBindValue(dept);
@@ -260,33 +270,33 @@ bool DatabaseHandler::updateUserInfo(const QString& id, const QString& name, con
     if (!teacherUpdated) {
         qDebug() << "更新 teacher_profiles 失败或该用户不是老师:" << query.lastError().text();
     }
-    
+
     // 至少要有一个表更新成功
     if (!studentUpdated && !teacherUpdated) {
-        qDebug() << "❌ 错误：该用户在学生表和老师表中都不存在！";
+        qDebug() << "错误：该用户在学生表和老师表中都不存在！";
         m_database.rollback();
         return false;
     }
-    
+
     m_database.commit();
-    qDebug() << "✅ 详情表更新成功";
-    
+    qDebug() << "详情表更新成功";
+
     // ✅ 添加：验证更新结果
     QSqlQuery verifyQuery(m_database);
     verifyQuery.prepare("SELECT user_id, password, status FROM users WHERE user_id = ?");
     verifyQuery.addBindValue(id);
 
     if (!verifyQuery.exec()) {
-        qDebug() << "❌ 验证查询执行失败:" << verifyQuery.lastError().text();
+        qDebug() << "验证查询执行失败:" << verifyQuery.lastError().text();
     } else if (!verifyQuery.next()) {
-        qDebug() << "❌ 验证查询无结果，用户可能不存在:" << id;
+        qDebug() << "验证查询无结果，用户可能不存在:" << id;
     } else {
-        qDebug() << "✅ 验证更新结果:";
+        qDebug() << "验证更新结果:";
         qDebug() << "  用户ID:" << verifyQuery.value("user_id").toString();
         qDebug() << "  新密码:" << verifyQuery.value("password").toString();
         qDebug() << "  新状态:" << verifyQuery.value("status").toInt();
     }
-    
+
     return true;
 }
 
@@ -294,9 +304,9 @@ bool DatabaseHandler::updateUserInfo(const QString& id, const QString& name, con
 //待实现
 QList<User*> DatabaseHandler::searchUsers(const QString& keyword) {
     QList<User*> list;
-    
+
     if (!m_database.isOpen()) {
-        qDebug() << "❌ 数据库未打开";
+        qDebug() << "数据库未打开";
         return list;
     }
 
@@ -310,14 +320,14 @@ QList<User*> DatabaseHandler::searchUsers(const QString& keyword) {
 
     QSqlQuery query(m_database);
     query.prepare(sql);
-    
+
     QString pattern = "%" + keyword + "%";
     query.addBindValue(pattern);
     query.addBindValue(pattern);
     query.addBindValue(pattern);
 
     if (!query.exec()) {
-        qDebug() << "❌ 搜索失败:" << query.lastError().text();
+        qDebug() << "搜索失败:" << query.lastError().text();
         return list;
     }
 
@@ -347,13 +357,13 @@ QList<User*> DatabaseHandler::searchUsers(const QString& keyword) {
         list.append(user);
     }
 
-    qDebug() << "🔍 搜索关键字:" << keyword << "结果数量:" << list.size();
+    qDebug() << "搜索关键字:" << keyword << "结果数量:" << list.size();
     return list;
 }
 
 bool DatabaseHandler::deleteUser(const QString& userId) {
     if (!m_database.isOpen()) {
-        qDebug() << "❌ 数据库未打开";
+        qDebug() << "数据库未打开";
         return false;
     }
 
@@ -373,22 +383,171 @@ bool DatabaseHandler::deleteUser(const QString& userId) {
     // 3. 删除主表
     query.prepare("DELETE FROM users WHERE user_id = ?");
     query.addBindValue(userId);
-    
+
     if (!query.exec()) {
-        qDebug() << "❌ 删除用户失败:" << query.lastError().text();
+        qDebug() << "删除用户失败:" << query.lastError().text();
         m_database.rollback();
         return false;
     }
 
     if (query.numRowsAffected() == 0) {
-        qDebug() << "❌ 用户不存在:" << userId;
+        qDebug() << "用户不存在:" << userId;
         m_database.rollback();
         return false;
     }
 
     m_database.commit();
-    qDebug() << "✅ 用户已删除:" << userId;
+    qDebug() << "用户已删除:" << userId;
     return true;
+}
+// ==========================================
+// 管理员文章相关操作 (QVariantList方式)
+// ==========================================
+
+QVariantList DatabaseHandler::getAllArticles()
+{
+    QVariantList list;
+
+    if (!m_database.isOpen()) {
+        qDebug() << "❌ 数据库未打开";
+        return list;
+    }
+
+    QSqlQuery query(m_database);
+    QString sql = "SELECT articleId, title, summary, author, date, readCount, content "
+                  "FROM psychologicalLiterature ORDER BY date DESC";
+
+    if (!query.exec(sql)) {
+        qDebug() << "❌ 查询文章失败:" << query.lastError().text();
+        return list;
+    }
+
+    while (query.next()) {
+        QVariantMap article;
+        article["articleId"] = query.value("articleId").toInt();
+        article["title"]     = query.value("title").toString();
+        article["summary"]   = query.value("summary").toString();
+        article["author"]    = query.value("author").toString();
+        article["date"]      = query.value("date").toString();
+        article["readCount"] = query.value("readCount").toInt();
+        article["content"]   = query.value("content").toString();
+        list.append(article);
+    }
+
+    qDebug() << "获取文章列表，共" << list.count() << "篇";
+    return list;
+}
+
+bool DatabaseHandler::addArticle(const QString& title, const QString& summary,
+                                 const QString& author, const QString& content)
+{
+    if (!m_database.isOpen()) {
+        qDebug() << "❌ 数据库未打开";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("INSERT INTO psychologicalLiterature (title, summary, author, date, readCount, content) "
+                  "VALUES (?, ?, ?, date('now'), 0, ?)");
+    query.addBindValue(title);
+    query.addBindValue(summary);
+    query.addBindValue(author);
+    query.addBindValue(content);
+
+    if (!query.exec()) {
+        qDebug() << "❌ 添加文章失败:" << query.lastError().text();
+        return false;
+    }
+
+    qDebug() << "✅ 文章添加成功:" << title;
+    return true;
+}
+
+bool DatabaseHandler::updateArticle(int articleId, const QString& title,
+                                    const QString& summary, const QString& content)
+{
+    if (!m_database.isOpen()) {
+        qDebug() << "❌ 数据库未打开";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("UPDATE psychologicalLiterature SET title = ?, summary = ?, content = ? "
+                  "WHERE articleId = ?");
+    query.addBindValue(title);
+    query.addBindValue(summary);
+    query.addBindValue(content);
+    query.addBindValue(articleId);
+
+    if (!query.exec()) {
+        qDebug() << "❌ 更新文章失败:" << query.lastError().text();
+        return false;
+    }
+
+    if (query.numRowsAffected() == 0) {
+        qDebug() << "❌ 文章不存在:" << articleId;
+        return false;
+    }
+
+    qDebug() << "✅ 文章更新成功:" << articleId;
+    return true;
+}
+
+bool DatabaseHandler::deleteArticle(int articleId)
+{
+    if (!m_database.isOpen()) {
+        qDebug() << "❌ 数据库未打开";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("DELETE FROM psychologicalLiterature WHERE articleId = ?");
+    query.addBindValue(articleId);
+
+    if (!query.exec()) {
+        qDebug() << "❌ 删除文章失败:" << query.lastError().text();
+        return false;
+    }
+
+    if (query.numRowsAffected() == 0) {
+        qDebug() << "❌ 文章不存在:" << articleId;
+        return false;
+    }
+
+    qDebug() << "✅ 文章删除成功:" << articleId;
+    return true;
+}
+
+QVariantMap DatabaseHandler::getArticleById(int articleId)
+{
+    QVariantMap article;
+
+    if (!m_database.isOpen()) {
+        qDebug() << "❌ 数据库未打开";
+        return article;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("SELECT articleId, title, summary, author, date, readCount, content "
+                  "FROM psychologicalLiterature WHERE articleId = ?");
+    query.addBindValue(articleId);
+
+    if (!query.exec()) {
+        qDebug() << "❌ 查询文章失败:" << query.lastError().text();
+        return article;
+    }
+
+    if (query.next()) {
+        article["articleId"] = query.value("articleId").toInt();
+        article["title"]     = query.value("title").toString();
+        article["summary"]   = query.value("summary").toString();
+        article["author"]    = query.value("author").toString();
+        article["date"]      = query.value("date").toString();
+        article["readCount"] = query.value("readCount").toInt();
+        article["content"]   = query.value("content").toString();
+    }
+
+    return article;
 }
 
 

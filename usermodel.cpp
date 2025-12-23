@@ -55,6 +55,16 @@ QVariant UserModel::data(const QModelIndex &index, int role) const {
             if (auto t = qobject_cast<Teacher*>(user)) return t->department();
             return "-";
         }
+        case GenderRole: {
+            // 仅学生有性别
+            if (auto s = qobject_cast<Student*>(user)) return s->gender();
+            return "";
+        }
+        case EntryYearRole: {
+            // 仅学生有入学年份
+            if (auto s = qobject_cast<Student*>(user)) return s->entryYear();
+            return "";
+        }
     }
     return QVariant();
 }
@@ -77,24 +87,28 @@ QHash<int, QByteArray> UserModel::roleNames() const
     roles[RoleRole] = "role";
     roles[DeptRole] = "dept";
     roles[StatusRole] = "status";
+    roles[GenderRole] = "gender";
+    roles[EntryYearRole] = "entryYear";
     return roles;
 }
 
 
-void UserModel::qmlAddUser(const QString& id, const QString& name, const QString& role, const QString& pwd) {
-    // 1. 调用数据库执行插入
-    // 注意：这里为了简化，默认“学院/部门”先留空或复用 name 字段，实际弹窗里应该加一个输入框
-    if (m_db->addNewUser(id, name, pwd, role, "默认学院")) {
-        // 2. 插入成功后，自动刷新列表显示最新数据
+void UserModel::qmlAddUser(const QString& id, const QString& name, const QString& role, const QString& pwd, const QString& dept, const QString& gender, const QString& entryYear)
+{
+    qDebug() << "🆕 QML调用添加用户:" << id << name << role << dept << "性别:" << gender << "入学年份:" << entryYear;
+
+    if (m_db->addNewUser(id, name, pwd, role, dept, gender, entryYear)) {
         refresh();
+        qDebug() << "✅ 用户添加成功";
     } else {
-        qDebug() << "添加失败";
+        qDebug() << "❌ 用户添加失败";
     }
 }
 
-void UserModel::qmlUpdateUser(const QString& id, const QString& name, const QString& dept, const QString& statusText, const QString& newPwd) {
+void UserModel::qmlUpdateUser(const QString& id, const QString& name, const QString& dept, const QString& statusText, const QString& newPwd, const QString& gender, const QString& entryYear) {
     int status = (statusText == "正常") ? 1 : 0;
-    if (m_db->updateUserInfo(id, name, dept, status, newPwd)) {
+    qDebug() << "📝 QML调用更新用户:" << id << name << dept << "性别:" << gender << "入学年份:" << entryYear;
+    if (m_db->updateUserInfo(id, name, dept, status, newPwd, gender, entryYear)) {
         qDebug() << "更新成功，正在刷新列表";
         refresh(); // 刷新列表
     } else {

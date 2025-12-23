@@ -9,46 +9,109 @@ Item {
     id: root
     
     property var parentWindow
-    
-    // 公共函数：打开各种弹窗
+
+    // 文章发布/更新后的信号
+    signal articlePublished()
+
+    // 公共函数
     function openAddUserDialog() {
         addUserDialog.open()
     }
-    
-    function openEditUserDialog(userId, userName, userDept) {
+
+    function openEditUserDialog(userId, userName, userDept, userRole, gender, entryYear) {
+        console.log("🔍 打开编辑弹窗 - userRole:", userRole, "userId:", userId, "gender:", gender, "entryYear:", entryYear)
         editUserDialog.userId = userId
         editUserDialog.userName = userName
         editUserDialog.userDept = userDept
+        editUserDialog.userRole = userRole
+        editUserDialog.userGender = gender || ""
+        editUserDialog.userEntryYear = entryYear || ""
+        console.log("🔍 设置后 editUserDialog.userRole:", editUserDialog.userRole)
         editUserDialog.open()
     }
-    
+
     function openSurveyDialog() {
         surveyDialog.open()
     }
-    
+
     function openArticleDialog() {
-        articleDialog.open()
+        articleDialog.openForAdd()
     }
-    
+
+    function openEditArticleDialog(articleId, title, summary, content) {
+        articleDialog.openForEdit(articleId, title, summary, content)
+    }
+
+    // // 公共函数：打开各种弹窗
+    // function openAddUserDialog() {
+    //     addUserDialog.open()
+    // }
+
+    // function openEditUserDialog(userId, userName, userDept) {
+    //     editUserDialog.userId = userId
+    //     editUserDialog.userName = userName
+    //     editUserDialog.userDept = userDept
+    //     editUserDialog.open()
+    // }
+
+    // function openSurveyDialog() {
+    //     surveyDialog.open()
+    // }
+
+    // function openArticleDialog() {
+    //     articleDialog.open()
+    // }
+
     // ==========================================
-    // 1. 添加新用户弹窗
+    // 1. 添加新用户弹窗（含学院/部门选择）
     // ==========================================
     Dialog {
         id: addUserDialog
         anchors.centerIn: parent
         width: 450
-        height: 400
+        height: 580
         modal: true
         title: "添加新账户"
-        
+
+        // 学院列表
+        property var collegeList: [
+            "计算机与信息科学学院",
+            "地理学院",
+            "化学学院",
+            "生命科学学院",
+            "数学科学学院",
+            "物理学院",
+            "经济管理学院",
+            "文学院",
+            "外国语学院",
+            "美术学院",
+            "马克思主义学院",
+            "音乐学院",
+            "体育学院",
+            "教育科学学院"
+        ]
+
+        // 部门列表
+        property var departmentList: [
+            "心理咨询中心",
+            "学生工作处",
+            "教务处",
+            "校医院",
+            "后勤保障部",
+            "招生就业处"
+        ]
+
+        // 入学年份列表
+        property var entryYearList: ["2021", "2022", "2023", "2024", "2025"]
+
         ColumnLayout {
             anchors.fill: parent
             spacing: 15
-            
+
             // 账户ID
             ColumnLayout {
                 spacing: 5
-                
+
                 Text { text: "账户 ID"; font.pixelSize: 13 }
                 TextField {
                     id: newUserId
@@ -56,11 +119,11 @@ Item {
                     placeholderText: "请输入学号或工号"
                 }
             }
-            
+
             // 姓名
             ColumnLayout {
                 spacing: 5
-                
+
                 Text { text: "姓名"; font.pixelSize: 13 }
                 TextField {
                     id: newUserName
@@ -68,23 +131,74 @@ Item {
                     placeholderText: "请输入姓名"
                 }
             }
-            
+
             // 角色
             ColumnLayout {
                 spacing: 5
-                
+
                 Text { text: "角色"; font.pixelSize: 13 }
                 ComboBox {
                     id: newUserRole
                     Layout.fillWidth: true
                     model: ["学生", "老师"]
+
+                    onCurrentTextChanged: {
+                        if (currentText === "学生") {
+                            newUserDept.model = addUserDialog.collegeList
+                        } else {
+                            newUserDept.model = addUserDialog.departmentList
+                        }
+                    }
                 }
             }
-            
+
+            // 学院/部门（下拉选择）
+            ColumnLayout {
+                spacing: 5
+
+                Text {
+                    text: newUserRole.currentText === "学生" ? "学院" : "部门"
+                    font.pixelSize: 13
+                }
+                ComboBox {
+                    id: newUserDept
+                    Layout.fillWidth: true
+                    model: addUserDialog.collegeList
+                    editable: true  // 允许手动输入
+                }
+            }
+
+            // 性别（仅学生显示）
+            ColumnLayout {
+                spacing: 5
+                visible: newUserRole.currentText === "学生"
+
+                Text { text: "性别"; font.pixelSize: 13 }
+                ComboBox {
+                    id: newUserGender
+                    Layout.fillWidth: true
+                    model: ["男", "女"]
+                }
+            }
+
+            // 入学年份（仅学生显示）
+            ColumnLayout {
+                spacing: 5
+                visible: newUserRole.currentText === "学生"
+
+                Text { text: "入学年份"; font.pixelSize: 13 }
+                ComboBox {
+                    id: newUserEntryYear
+                    Layout.fillWidth: true
+                    model: addUserDialog.entryYearList
+                    editable: true  // 允许手动输入
+                }
+            }
+
             // 初始密码
             ColumnLayout {
                 spacing: 5
-                
+
                 Text { text: "初始密码"; font.pixelSize: 13 }
                 TextField {
                     id: newUserPassword
@@ -93,39 +207,42 @@ Item {
                     echoMode: TextInput.Password
                 }
             }
-            
+
             Item { Layout.fillHeight: true }
-            
+
             // 按钮
             RowLayout {
                 Layout.fillWidth: true
-                
+
                 Item { Layout.fillWidth: true }
-                
+
                 Button {
                     text: "取消"
                     onClicked: addUserDialog.close()
                 }
-                
+
                 Button {
                     text: "保存"
                     highlighted: true
-                    
+
                     background: Rectangle {
                         color: parent.pressed ? "#229954" : "#27ae60"
                         radius: 4
                     }
-                    
+
                     onClicked: {
-                        console.log("创建账户:", newUserId.text, newUserName.text)
-                        // 调用 C++ 接口
-                        // 注意：你需要确保 CustomDialogs 能访问到 adminUserModel
-                        // 或者在 main.qml 里把 model 传进来
+                        console.log("创建账户:", newUserId.text, newUserName.text, newUserDept.currentText)
+                        // 学生需要传递性别和入学年份
+                        var gender = newUserRole.currentText === "学生" ? newUserGender.currentText : ""
+                        var entryYear = newUserRole.currentText === "学生" ? newUserEntryYear.currentText : ""
                         adminUserModel.qmlAddUser(
                             newUserId.text,
                             newUserName.text,
                             newUserRole.currentText,
-                            newUserPassword.text
+                            newUserPassword.text,
+                            newUserDept.currentText,
+                            gender,
+                            entryYear
                         )
                         addUserDialog.close()
                     }
@@ -133,7 +250,7 @@ Item {
             }
         }
     }
-    
+
     // ==========================================
     // 2. 修改账户弹窗（含密码管理）
     // ==========================================
@@ -141,13 +258,19 @@ Item {
         id: editUserDialog
         anchors.centerIn: parent
         width: 600
-        height: 650
+        height: 750
         modal: true
         title: "修改账户信息"
         
         property string userId: ""
         property string userName: ""
         property string userDept: ""
+        property string userRole: ""
+        property string userGender: ""
+        property string userEntryYear: ""
+
+        // 入学年份列表
+        property var entryYearList: ["2021", "2022", "2023", "2024", "2025"]
         
         ScrollView {
             anchors.fill: parent
@@ -189,15 +312,118 @@ Item {
                     }
                 }
                 
-                // 学院/部门
+                // 学院/部门（下拉选择）
                 ColumnLayout {
                     spacing: 5
-                    
-                    Text { text: "学院/部门"; font.pixelSize: 13 }
-                    TextField {
+                    visible: editUserDialog.userRole !== "admin"//管理员不显示部门
+
+                    Text { 
+                        text: editUserDialog.userRole === "student" ? "学院" : 
+                              editUserDialog.userRole === "teacher" ? "部门" : "学院/部门"
+                        font.pixelSize: 13 
+                    }
+                    ComboBox {
                         id: editUserDept
                         Layout.fillWidth: true
-                        text: editUserDialog.userDept
+                        editable: true  // 允许手动输入
+                        enabled: editUserDialog.userRole !== "admin" //对管理员禁用，因为管理员不属于任何部门
+
+                        // 根据角色动态设置列表
+                        model: editUserDialog.userRole === "student" ? [
+                            "计算机与信息科学学院",
+                            "地理学院",
+                            "化学学院",
+                            "生命科学学院",
+                            "数学科学学院",
+                            "物理学院",
+                            "经济管理学院",
+                            "文学院",
+                            "外国语学院",
+                            "美术学院",
+                            "马克思主义学院",
+                            "音乐学院",
+                            "体育学院",
+                            "教育科学学院"
+                        ] : editUserDialog.userRole === "teacher" ? [
+                            "心理咨询中心",
+                            "学生工作处",
+                            "教务处",
+                            "校医院",
+                            "后勤保障部",
+                            "招生就业处"
+                        ] : []
+
+                        // 设置当前值
+                        Component.onCompleted: {
+                            console.log("🔍 ComboBox 初始化 - userRole:", editUserDialog.userRole)
+                            console.log("🔍 ComboBox model count:", editUserDept.count)
+                            console.log("🔍 ComboBox model:", editUserDept.model)
+                            editUserDept.editText = editUserDialog.userDept
+                        }
+
+                        //角色变化时更新当前值
+                        Connections {
+                            target: editUserDialog
+                            function onUserDeptChanged() {
+                                editUserDept.editText = editUserDialog.userDept
+                            }
+                            function onUserRoleChanged() {
+                                console.log("🔍 userRole 变化:", editUserDialog.userRole)
+                                console.log("🔍 新的 model count:", editUserDept.count)
+                            }
+                        }
+                    }
+                }
+
+                // 性别（仅学生显示）
+                ColumnLayout {
+                    spacing: 5
+                    visible: editUserDialog.userRole === "student"
+
+                    Text { text: "性别"; font.pixelSize: 13 }
+                    ComboBox {
+                        id: editUserGender
+                        Layout.fillWidth: true
+                        model: ["男", "女"]
+
+                        Component.onCompleted: {
+                            // 设置初始值
+                            var idx = editUserGender.find(editUserDialog.userGender)
+                            if (idx >= 0) editUserGender.currentIndex = idx
+                        }
+
+                        Connections {
+                            target: editUserDialog
+                            function onUserGenderChanged() {
+                                var idx = editUserGender.find(editUserDialog.userGender)
+                                if (idx >= 0) editUserGender.currentIndex = idx
+                            }
+                        }
+                    }
+                }
+
+                // 入学年份（仅学生显示）
+                ColumnLayout {
+                    spacing: 5
+                    visible: editUserDialog.userRole === "student"
+
+                    Text { text: "入学年份"; font.pixelSize: 13 }
+                    ComboBox {
+                        id: editUserEntryYear
+                        Layout.fillWidth: true
+                        model: editUserDialog.entryYearList
+                        editable: true  // 允许手动输入
+
+                        Component.onCompleted: {
+                            editUserEntryYear.editText = editUserDialog.userEntryYear
+                        }
+
+                        Connections {
+                            target: editUserDialog
+                            function onUserEntryYearChanged() {
+                                editUserEntryYear.editText = editUserDialog.userEntryYear
+                            }
+                        }
                     }
                 }
                 
@@ -229,52 +455,6 @@ Item {
                     font.weight: Font.Bold
                     color: "#2c3e50"
                 }
-                
-                // 当前密码
-                // ColumnLayout {
-                //     spacing: 5
-                    
-                //     Text { text: "当前密码"; font.pixelSize: 13 }
-                    
-                //     RowLayout {
-                //         spacing: 10
-                        
-                        // TextField {
-                        //     id: currentPasswordField
-                        //     Layout.fillWidth: true
-                        //     placeholderText: "点击按钮查看"
-                        //     enabled: false
-                        //     echoMode: showPasswordBtn.checked ? TextInput.Normal : TextInput.Password
-                            
-                        //     background: Rectangle {
-                        //         color: "#f5f5f5"
-                        //         border.color: "#ddd"
-                        //         border.width: 1
-                        //         radius: 4
-                        //     }
-                        // }
-                        
-                        // Button {
-                        //     id: showPasswordBtn
-                        //     text: checked ? "👁️ 隐藏" : "👁️ 查看"
-                        //     checkable: true
-                            
-                        //     background: Rectangle {
-                        //         color: parent.pressed ? "#2980b9" : "#3498db"
-                        //         radius: 4
-                        //     }
-                            
-                        //     onCheckedChanged: {
-                        //         if (checked) {
-                        //             // 模拟显示密码
-                        //             currentPasswordField.text = adminUserModel.password
-                        //         } else {
-                        //             currentPasswordField.text = ""
-                        //         }
-                        //     }
-                        // }
-                //     }
-                // }
                 
                 // 新密码
                 ColumnLayout {
@@ -381,12 +561,17 @@ Item {
                             
                             console.log("更新账户:", editUserId.text);
                             // 调用 C++ 接口更新
+                            // 学生需要传递性别和入学年份
+                            var gender = editUserDialog.userRole === "student" ? editUserGender.currentText : ""
+                            var entryYear = editUserDialog.userRole === "student" ? editUserEntryYear.editText : ""
                             adminUserModel.qmlUpdateUser(
                                 editUserId.text,       // ID
                                 editUserName.text,     // 姓名
-                                editUserDept.text,     // 部门
+                                editUserDept.editText,     // 部门
                                 editUserStatus.currentText, // 状态文本 ("正常"/"封禁")
-                                newPasswordField.text  // 新密码 (为空则不改)
+                                newPasswordField.text,  // 新密码 (为空则不改)
+                                gender,                // 性别 (仅学生)
+                                entryYear              // 入学年份 (仅学生)
                             )
                             editUserDialog.close()
                         }
@@ -626,152 +811,164 @@ Item {
         }
     }
     
-    // ==========================================
-    // 4. 发布文章弹窗
+        // ==========================================
+    // 4. 发布/编辑文章弹窗（简化版 - QVariantList）
     // ==========================================
     Dialog {
         id: articleDialog
         anchors.centerIn: parent
         width: 800
-        height: 650
+        height: 550
         modal: true
-        title: "发布科普文章"
+        title: isEditMode ? "编辑文章" : "发布科普文章"
+
+        property bool isEditMode: false
+        property int editArticleId: 0
+
+        function openForAdd() {
+            isEditMode = false
+            editArticleId =0 
+            articleTitle.text = ""
+            articleAuthor.text = ""
+            articleSummary.text=""
+            articleContent.text=""
+            open()
+        }
         
+        function openForEdit(articleId, title, summary, content) {
+            isEditMode = true
+            editArticleId = articleId
+            articleTitle.text = title
+            articleSummary.text = summary
+            articleContent.text = content
+            // 从数据库获取作者信息
+            //var article = databaseHandler.getArticleById(articleId)
+            //if (article && article.author) {
+            //    articleAuthor.text = article.author
+            //}
+            open()
+        }
+
         ScrollView {
             anchors.fill: parent
             clip: true
-            
+
             ColumnLayout {
                 width: articleDialog.width - 40
                 spacing: 15
-                
+
                 // 文章标题
                 ColumnLayout {
                     spacing: 5
-                    
+
                     Text { text: "文章标题"; font.pixelSize: 13 }
                     TextField {
                         id: articleTitle
                         Layout.fillWidth: true
-                        placeholderText: "请输入吸引人的标题"
+                        placeholderText: "请输入文章标题"
                     }
                 }
-                
-                // 分类和封面图
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 20
-                    
-                    ColumnLayout {
+
+                // 作者（仅新增时显示）
+                ColumnLayout {
+                    spacing: 5
+                    visible: !articleDialog.isEditMode
+
+                    Text { text: "作者"; font.pixelSize: 13 }
+                    TextField {
+                        id: articleAuthor
                         Layout.fillWidth: true
-                        spacing: 5
-                        
-                        Text { text: "分类"; font.pixelSize: 13 }
-                        ComboBox {
-                            Layout.fillWidth: true
-                            model: ["压力管理", "人际交往", "自我认知", "情绪调节", "睡眠卫生"]
-                        }
+                        placeholderText: "请输入作者名称"
                     }
-                    
-                    ColumnLayout {
+                }
+
+                // 文章摘要
+                ColumnLayout {
+                    spacing: 5
+
+                    Text { text: "文章摘要"; font.pixelSize: 13 }
+                    TextField {
+                        id: articleSummary
                         Layout.fillWidth: true
-                        spacing: 5
-                        
-                        Text { text: "封面图链接 (可选)"; font.pixelSize: 13 }
-                        TextField {
-                            Layout.fillWidth: true
-                            placeholderText: "https://example.com/image.jpg"
-                        }
+                        placeholderText: "简短描述文章内容"
                     }
                 }
-                
-                // 工具栏
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-                    color: "#f9f9f9"
-                    border.color: "#ddd"
-                    border.width: 1
-                    radius: 4
-                    
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        spacing: 15
-                        
-                        Text { text: "𝐁"; font.pixelSize: 16; font.bold: true }
-                        Text { text: "𝐼"; font.pixelSize: 16; font.italic: true }
-                        Text { text: "≡"; font.pixelSize: 16 }
-                        Text { text: "🔗"; font.pixelSize: 14 }
-                        Text { text: "🖼️"; font.pixelSize: 14 }
-                    }
-                }
-                
+
                 // 文章内容
                 ColumnLayout {
-                    spacing: 0
-                    
+                    spacing: 5
+
+                    Text { text: "文章内容"; font.pixelSize: 13 }
                     ScrollView {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 300
-                        
+                        Layout.preferredHeight: 250
+
                         TextArea {
                             id: articleContent
-                            placeholderText: "# 这里开始撰写文章内容...\n\n## 小标题\n正文内容..."
+                            placeholderText: "请输入文章正文内容..."
                             wrapMode: TextArea.Wrap
-                            font.family: "monospace"
+                            font.pixelSize: 14
                         }
                     }
                 }
-                
+
                 // 按钮区域
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.topMargin: 10
-                    
-                    Button {
-                        text: "💾 存为草稿"
-                        
-                        contentItem: Text {
-                            text: parent.text
-                            color: "#666"
-                        }
-                        
-                        onClicked: {
-                            console.log("保存草稿:", articleTitle.text)
-                        }
-                    }
-                    
+
                     Item { Layout.fillWidth: true }
-                    
+
                     Button {
                         text: "取消"
                         onClicked: articleDialog.close()
                     }
-                    
+
                     Button {
-                        text: "正式发布"
+                        text: articleDialog.isEditMode ? "保存修改" : "发布文章"
                         highlighted: true
-                        
+
                         background: Rectangle {
                             color: parent.pressed ? "#229954" : "#27ae60"
                             radius: 4
                         }
-                        
+
+                        contentItem: Text {
+                            text: parent.text
+                            color: "white"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
                         onClicked: {
-                            // 使用 JS 验证和发布
-                            const result = DialogManager.publishArticle(
-                                articleTitle.text,
-                                articleContent.text
-                            );
-                            
-                            if (!result.valid) {
-                                emptyTitleDialog.open();
-                                return;
+                            if (articleTitle.text.trim() === "") {
+                                emptyTitleDialog.open()
+                                return
                             }
+
+                            if (articleDialog.isEditMode) {
+                                // 编辑模式：更新文章
+                                databaseHandler.updateArticle(
+                                    articleDialog.editArticleId,
+                                    articleTitle.text,
+                                    articleSummary.text,
+                                    articleContent.text,
+                                    //articleAuthor.text
+                                )
+                            } else {
+                                // 新增模式：发布文章
+                                databaseHandler.addArticle(
+                                    articleTitle.text,
+                                    articleSummary.text,
+                                    articleAuthor.text,
+                                    articleContent.text
+                                )
+                            }
+
+                            articleDialog.close()
                             
-                            console.log("发布文章:", articleTitle.text);
-                            articleDialog.close();
+                            // 通知刷新列表
+                            articlePublished()
                         }
                     }
                 }

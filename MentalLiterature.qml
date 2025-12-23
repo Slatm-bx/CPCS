@@ -1,14 +1,43 @@
-// ArticlePanel.qml - 科普文章管理面板
+// MentalLiterature.qml - 科普文章管理面板 (QVariantList版本)
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
 Rectangle {
+    id: root
     color: "white"
     radius: 8
 
-    // 信号：显示文章编辑弹窗
+    // 信号
     signal showArticleDialog()
+    signal showEditArticleDialog(int articleId, string title, string summary, string content)
+
+    // 本地 ListModel 存储文章数据
+    ListModel {
+        id: articleListModel
+    }
+
+    // 从数据库加载文章到 ListModel
+    function refreshArticles() {
+        articleListModel.clear()
+        var articles = databaseHandler.getAllArticles()
+        for (var i = 0; i < articles.length; i++) {
+            articleListModel.append(articles[i])
+        }
+        console.log("📚 刷新文章列表，共", articleListModel.count, "篇")
+    }
+
+    // 删除文章
+    function deleteArticle(articleId) {
+        if (databaseHandler.deleteArticle(articleId)) {
+            refreshArticles()
+        }
+    }
+
+    // 页面加载时刷新数据
+    Component.onCompleted: {
+        refreshArticles()
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -27,6 +56,26 @@ Rectangle {
             }
 
             Item { Layout.fillWidth: true }
+
+            Button {
+                text: "🔄 刷新"
+                Layout.preferredWidth: 80
+
+                background: Rectangle {
+                    color: parent.pressed ? "#2980b9" : (parent.hovered ? "#3498db" : "#3498db")
+                    radius: 4
+                }
+
+                contentItem: Text {
+                    text: parent.text
+                    color: "white"
+                    font.weight: Font.Medium
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                onClicked: refreshArticles()
+            }
 
             Button {
                 text: "✏️ 发布新文章"
@@ -67,34 +116,18 @@ Rectangle {
                     anchors.leftMargin: 15
                     anchors.rightMargin: 15
                     spacing: 10
+                    anchors.verticalCenter: parent.verticalCenter
 
                     Text { text: "标题"; Layout.preferredWidth: 250; font.weight: Font.DemiBold; color: "#34495e" }
-                    Text { text: "主题分类"; Layout.preferredWidth: 100; font.weight: Font.DemiBold; color: "#34495e" }
+                    Text { text: "作者"; Layout.preferredWidth: 100; font.weight: Font.DemiBold; color: "#34495e" }
                     Text { text: "发布时间"; Layout.preferredWidth: 100; font.weight: Font.DemiBold; color: "#34495e" }
                     Text { text: "阅读量"; Layout.preferredWidth: 80; font.weight: Font.DemiBold; color: "#34495e" }
-                    Text { text: "状态"; Layout.preferredWidth: 80; font.weight: Font.DemiBold; color: "#34495e" }
                     Text { text: "操作"; Layout.fillWidth: true; font.weight: Font.DemiBold; color: "#34495e" }
                 }
             }
 
-            model: ListModel {
-                ListElement {
-                    title: "如何应对期末考试焦虑？"
-                    category: "压力管理"
-                    publishDate: "2025-12-01"
-                    views: "1,240"
-                    status: "已发布"
-                    isPublished: true
-                }
-                ListElement {
-                    title: "建立健康的亲密关系指南"
-                    category: "恋爱关系"
-                    publishDate: "2025-11-28"
-                    views: "856"
-                    status: "草稿"
-                    isPublished: false
-                }
-            }
+            // 使用本地 ListModel
+            model: articleListModel
 
             delegate: Rectangle {
                 width: articleListView.width
@@ -113,6 +146,7 @@ Rectangle {
                     anchors.leftMargin: 15
                     anchors.rightMargin: 15
                     spacing: 10
+                    anchors.verticalCenter: parent.verticalCenter
 
                     // 标题
                     Text {
@@ -122,24 +156,17 @@ Rectangle {
                         font.pixelSize: 14
                     }
 
-                    // 分类标签
-                    Rectangle {
+                    // 作者
+                    Text {
+                        text: model.author
                         Layout.preferredWidth: 100
-                        Layout.preferredHeight: 24
-                        radius: 4
-                        color: "#e1f5fe"
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: model.category
-                            font.pixelSize: 12
-                            color: "#0288d1"
-                        }
+                        font.pixelSize: 14
+                        color: "#666"
                     }
 
                     // 发布时间
                     Text {
-                        text: model.publishDate
+                        text: model.date
                         Layout.preferredWidth: 100
                         font.pixelSize: 14
                         color: "#666"
@@ -147,25 +174,10 @@ Rectangle {
 
                     // 阅读量
                     Text {
-                        text: model.views
+                        text: model.readCount
                         Layout.preferredWidth: 80
                         font.pixelSize: 14
                         color: "#666"
-                    }
-
-                    // 状态
-                    Rectangle {
-                        Layout.preferredWidth: 80
-                        Layout.preferredHeight: 24
-                        radius: 12
-                        color: model.isPublished ? "#e3f9eb" : "#eee"
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: model.status
-                            font.pixelSize: 12
-                            color: model.isPublished ? "#27ae60" : "#666"
-                        }
                     }
 
                     // 操作按钮
@@ -173,6 +185,7 @@ Rectangle {
                         Layout.fillWidth: true
                         spacing: 15
 
+                        // 编辑按钮
                         Text {
                             text: "✏️"
                             font.pixelSize: 18
@@ -181,10 +194,18 @@ Rectangle {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: showArticleDialog()
+                                onClicked: {
+                                    root.showEditArticleDialog(
+                                        model.articleId,
+                                        model.title,
+                                        model.summary,
+                                        model.content
+                                    )
+                                }
                             }
                         }
 
+                        // 删除按钮
                         Text {
                             text: "🗑️"
                             font.pixelSize: 18
@@ -193,28 +214,90 @@ Rectangle {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: console.log("删除文章:", model.title)
+                                onClicked: {
+                                    deleteConfirmDialog.articleId = model.articleId
+                                    deleteConfirmDialog.articleTitle = model.title
+                                    deleteConfirmDialog.open()
+                                }
                             }
                         }
+                    }
+                }
+            }
+
+            // 空列表提示
+            Text {
+                anchors.centerIn: parent
+                text: "暂无文章，点击「发布新文章」添加"
+                font.pixelSize: 16
+                color: "#999"
+                visible: articleListView.count === 0
+            }
+        }
+    }
+
+    // 删除确认弹窗
+    Dialog {
+        id: deleteConfirmDialog
+        anchors.centerIn: parent
+        width: 400
+        height: 180
+        modal: true
+        title: "确认删除"
+
+        property int articleId: 0
+        property string articleTitle: ""
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 15
+
+            Text {
+                text: "确定要删除文章「" + deleteConfirmDialog.articleTitle + "」吗？"
+                font.pixelSize: 14
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+
+            Text {
+                text: "此操作不可撤销！"
+                font.pixelSize: 12
+                color: "#e74c3c"
+            }
+
+            Item { Layout.fillHeight: true }
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Item { Layout.fillWidth: true }
+
+                Button {
+                    text: "取消"
+                    onClicked: deleteConfirmDialog.close()
+                }
+
+                Button {
+                    text: "确认删除"
+
+                    background: Rectangle {
+                        color: parent.pressed ? "#c0392b" : "#e74c3c"
+                        radius: 4
+                    }
+
+                    contentItem: Text {
+                        text: parent.text
+                        color: "white"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: {
+                        root.deleteArticle(deleteConfirmDialog.articleId)
+                        deleteConfirmDialog.close()
                     }
                 }
             }
         }
     }
 }
-
-
-// import QtQuick 2.15
-// import QtQuick.Controls 2.15
-
-// Rectangle {
-//     color: "#e3f2fd"  // 浅蓝色
-
-//     Text {
-//         anchors.centerIn: parent
-//         text: "心理文献界面"
-//         font.pixelSize: 24
-//         font.bold: true
-//         color: "#1976d2"
-//     }
-// }
