@@ -8,10 +8,19 @@ Rectangle {
     id: adminPage
     color: "#f8f9fa"
 
-    signal showAddUserDialog()
-    signal showEditUserDialog(string userId, string userName, string userDept, string userRole, string gender, string entryYear)
-    signal showSurveyDialog()
+    //signal showAddUserDialog()
+    //signal showEditUserDialog(string userId, string userName, string userDept, string userRole, string gender, string entryYear)
+    //signal showSurveyDialog()
+    //signal showArticleDialog()
+
+    signal showAddDialog()  // 改为 showAddDialog
+    signal showEditDialog(string userId, string userName, string userDept, string userRole, string gender, string entryYear)  // 改为 showEditDialog
+    // signal showSurveyDialog()
     signal showArticleDialog()
+    signal showEditArticleDialog(int articleId, string title, string summary, string content)  // 添加这个
+    signal showConsultationDetailDialog(int consultationId, string studentName, string counselor,
+                                    string consultationDate, string consultationType,
+                                    int duration, string phoneNumber, string selfEvaluation, string summary)  // 添加这个
 
     // 第一行：顶部标题栏
     Rectangle {
@@ -286,13 +295,14 @@ Rectangle {
                 // 监听加载页面的信号并转发给 AdminPage
                 Connections {
                     target: contentLoader.item
+                    ignoreUnknownSignals:true
 
                     function onShowAddDialog() {
-                        adminPage.showAddUserDialog()
+                        adminPage.showAddDialog()
                     }
 
                     function onShowEditDialog(userId, userName, userDept, userRole, gender, entryYear) {
-                        adminPage.showEditUserDialog(userId, userName, userDept, userRole, gender, entryYear)
+                        adminPage.showEditDialog(userId, userName, userDept, userRole, gender, entryYear)
                     }
 
                     function onShowArticleDialog() {
@@ -303,9 +313,9 @@ Rectangle {
                         dialogs.openEditArticleDialog(articleId, title, summary, content)
                     }
 
-                    function onShowSurveyDialog() {
-                        adminPage.showSurveyDialog()
-                    }
+                   // function onShowSurveyDialog() {
+                   //     adminPage.showSurveyDialog()
+                   // }
 
                     function onShowConsultationDetailDialog(consultationId, studentName, counselor,
                                                              consultationDate, consultationType,
@@ -369,17 +379,25 @@ Rectangle {
     // 连接信号到弹窗}
     Connections {
         target: adminPage
-        function onShowAddUserDialog() {
+        function onShowAddDialog() {
             dialogs.openAddUserDialog()
         }
-        function onShowEditUserDialog(userId, userName, userDept, userRole, gender, entryYear) {
+        function onShowEditDialog(userId, userName, userDept, userRole, gender, entryYear) {
             dialogs.openEditUserDialog(userId, userName, userDept, userRole, gender, entryYear)
-        }
-        function onShowSurveyDialog() {
-            dialogs.openSurveyDialog()
         }
         function onShowArticleDialog() {
             dialogs.openArticleDialog()
+        }
+
+        function onShowEditArticleDialog(articleId, title, summary, content) {  // 添加
+            dialogs.openEditArticleDialog(articleId, title, summary, content)
+        }
+        function onShowConsultationDetailDialog(consultationId, studentName, counselor,
+                                                consultationDate, consultationType,
+                                                duration, phoneNumber, selfEvaluation, summary) {  // 添加
+            dialogs.openConsultationDetailDialog(consultationId, studentName, counselor,
+                                                  consultationDate, consultationType,
+                                                  duration, phoneNumber, selfEvaluation, summary)
         }
     }
 }

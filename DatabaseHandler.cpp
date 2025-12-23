@@ -1351,3 +1351,101 @@ QVariantList DatabaseHandler::getAllConsultationLogs()
     // qDebug() << "成功获取所有咨询日志，共" << count << "条";
     return logsList;
 }
+
+// ==========================================
+// 心理测试问卷管理操作
+// ==========================================
+
+// 获取所有测试卷
+QVariantList DatabaseHandler::getAllPsychologicalTests()
+{
+    QVariantList testsList;
+
+    if (!openDatabase()) {
+        // qDebug() << "数据库连接失败，无法获取测试卷列表";
+        return testsList;
+    }
+
+    QSqlQuery query(m_database);
+    QString sql = "SELECT anTest_id, type, p1, p2, p3, p4, p5 "
+                  "FROM PsychologicalTest "
+                  "ORDER BY anTest_id DESC";
+
+    if (!query.exec(sql)) {
+        // qDebug() << "查询测试卷列表失败:" << query.lastError().text();
+        return testsList;
+    }
+
+    while (query.next()) {
+        QVariantMap test;
+        test["anTestId"] = query.value("anTest_id").toInt();
+        test["type"] = query.value("type").toString();
+        test["p1"] = query.value("p1").toString();
+        test["p2"] = query.value("p2").toString();
+        test["p3"] = query.value("p3").toString();
+        test["p4"] = query.value("p4").toString();
+        test["p5"] = query.value("p5").toString();
+
+        testsList.append(test);
+    }
+
+    // qDebug() << "成功获取测试卷列表，共" << testsList.count() << "份";
+    return testsList;
+}
+
+// 新增测试卷
+bool DatabaseHandler::addPsychologicalTest(const QString &type,
+                                           const QString &p1, const QString &p2,
+                                           const QString &p3, const QString &p4,
+                                           const QString &p5)
+{
+    if (!openDatabase()) {
+        // qDebug() << "数据库连接失败，无法添加测试卷";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("INSERT INTO PsychologicalTest (type, p1, p2, p3, p4, p5) "
+                  "VALUES (?, ?, ?, ?, ?, ?)");
+    query.addBindValue(type);
+    query.addBindValue(p1);
+    query.addBindValue(p2);
+    query.addBindValue(p3);
+    query.addBindValue(p4);
+    query.addBindValue(p5);
+
+    if (!query.exec()) {
+        // qDebug() << "添加测试卷失败:" << query.lastError().text();
+        return false;
+    }
+
+    // qDebug() << "测试卷添加成功:" << type;
+    return true;
+}
+
+// 删除测试卷
+bool DatabaseHandler::deletePsychologicalTest(int anTestId)
+{
+    if (!openDatabase()) {
+        // qDebug() << "数据库连接失败，无法删除测试卷";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("DELETE FROM PsychologicalTest WHERE anTest_id = ?");
+    query.addBindValue(anTestId);
+
+    if (!query.exec()) {
+        // qDebug() << "删除测试卷失败:" << query.lastError().text();
+        return false;
+    }
+
+    if (query.numRowsAffected() == 0) {
+        // qDebug() << "测试卷不存在:" << anTestId;
+        return false;
+    }
+
+    // qDebug() << "测试卷删除成功:" << anTestId;
+    return true;
+}
+

@@ -106,6 +106,17 @@ public:
     // 获取所有咨询记录（关联学生姓名）
     Q_INVOKABLE QVariantList getAllConsultationLogs();
 
+    // --- 心理测试问卷管理操作 ---
+    // 获取所有测试卷
+    Q_INVOKABLE QVariantList getAllPsychologicalTests();
+    // 新增测试卷
+    Q_INVOKABLE bool addPsychologicalTest(const QString &type, 
+                                          const QString &p1, const QString &p2, 
+                                          const QString &p3, const QString &p4, 
+                                          const QString &p5);
+    // 删除测试卷
+    Q_INVOKABLE bool deletePsychologicalTest(int anTestId);
+
 private:
     bool openDatabase();
     QSqlDatabase m_database;

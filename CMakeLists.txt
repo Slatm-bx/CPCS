@@ -68,6 +68,7 @@ source_group("Admin Files" FILES
     AdminPage.qml adminManager.js AdminHome.qml
     ConsultationSupervision.qml UserManagement.qml
     MentalLiterature.qml  CustomDialogs.qml dialogManager.js
+    PsychologicalTests.qml
 )
 
 target_compile_features(apppsychological PRIVATE cxx_std_23)
