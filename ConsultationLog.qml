@@ -6,87 +6,19 @@ Rectangle {
     id: consultationLogPage
     color: "#e8eaf6"
 
+    property string currentUserId: databaseHandler.getCurrentUserId()
+    property bool isLoading: false
+    property int totalConsultations: 0
+    property int completedConsultations: 0
+    property int notCompletedConsultations: 0
+
     // 咨询日志数据模型
     ListModel {
         id: consultationLogModel
+    }
 
-        ListElement {
-            logId: "log1"
-            date: "2023-12-18"
-            time: "14:30-15:20"
-            counselor: "张教授"
-            type: "线上咨询"
-            status: "已完成"
-            statusColor: "#4caf50"
-            duration: "50分钟"
-            summary: "讨论学业压力问题，提供时间管理建议"
-            evaluation: "有帮助，情绪有所缓解"
-        }
-
-        ListElement {
-            logId: "log2"
-            date: "2023-12-15"
-            time: "10:00-10:50"
-            counselor: "李老师"
-            type: "线下咨询"
-            status: "已完成"
-            statusColor: "#4caf50"
-            duration: "50分钟"
-            summary: "人际关系困扰，学习沟通技巧"
-            evaluation: "非常有用，学会了更好的沟通方式"
-        }
-
-        ListElement {
-            logId: "log3"
-            date: "2023-12-12"
-            time: "16:00-16:50"
-            counselor: "王医生"
-            type: "线上咨询"
-            status: "已完成"
-            statusColor: "#4caf50"
-            duration: "50分钟"
-            summary: "睡眠质量改善咨询"
-            evaluation: "睡眠有所改善，继续坚持"
-        }
-
-        ListElement {
-            logId: "log4"
-            date: "2023-12-08"
-            time: "15:00-15:50"
-            counselor: "刘老师"
-            type: "线下咨询"
-            status: "已取消"
-            statusColor: "#f44336"
-            duration: "50分钟"
-            summary: "职业规划咨询（因故取消）"
-            evaluation: ""
-        }
-
-        ListElement {
-            logId: "log5"
-            date: "2023-12-05"
-            time: "11:00-11:50"
-            counselor: "陈老师"
-            type: "线上咨询"
-            status: "已完成"
-            statusColor: "#4caf50"
-            duration: "50分钟"
-            summary: "情绪管理，正念练习指导"
-            evaluation: "学会了放松技巧，情绪更稳定"
-        }
-
-        ListElement {
-            logId: "log6"
-            date: "2023-12-01"
-            time: "09:30-10:20"
-            counselor: "赵老师"
-            type: "线下咨询"
-            status: "已完成"
-            statusColor: "#4caf50"
-            duration: "50分钟"
-            summary: "家庭关系协调咨询"
-            evaluation: "理解了家人立场，关系有所改善"
-        }
+    Component.onCompleted: {
+        loadConsultationLogs()
     }
 
     ColumnLayout {
@@ -127,7 +59,7 @@ Rectangle {
                     }
 
                     Text {
-                        text: "6 次"
+                        text: totalConsultations + " 次"
                         font.pixelSize: 20
                         font.bold: true
                         color: "#5c6bc0"
@@ -145,25 +77,25 @@ Rectangle {
                     }
 
                     Text {
-                        text: "5 次"
+                        text: completedConsultations + " 次"
                         font.pixelSize: 20
                         font.bold: true
                         color: "#4caf50"
                     }
                 }
 
-                // 线上/线下比例
+                // 未完成次数
                 Column {
                     spacing: 5
 
                     Text {
-                        text: "线上/线下"
+                        text: "未完成"
                         font.pixelSize: 12
                         color: "#666"
                     }
 
                     Text {
-                        text: "3 / 3"
+                        text: notCompletedConsultations + " 次"
                         font.pixelSize: 20
                         font.bold: true
                         color: "#ff9800"
@@ -218,14 +150,14 @@ Rectangle {
                                 spacing: 2
 
                                 Text {
-                                    text: model.date
+                                    text: model.consultationDate || "未指定"
                                     font.pixelSize: 16
                                     font.bold: true
                                     color: "#5c6bc0"
                                 }
 
                                 Text {
-                                    text: model.time + " (" + model.duration + ")"
+                                    text: (model.consultationSlot || "未指定") + " (" + (model.duration ? model.duration + "分钟" : "未记录") + ")"
                                     font.pixelSize: 12
                                     color: "#666"
                                 }
@@ -236,13 +168,13 @@ Rectangle {
                                 spacing: 2
 
                                 Text {
-                                    text: "导师：" + model.counselor
+                                    text: "导师：" + (model.teacherName || "未知咨询师")
                                     font.pixelSize: 14
                                     color: "#333"
                                 }
 
                                 Text {
-                                    text: "类型：" + model.type
+                                    text: "类型：" + (model.consultationType || "未指定")
                                     font.pixelSize: 12
                                     color: "#666"
                                 }
@@ -253,11 +185,11 @@ Rectangle {
                                 width: 60
                                 height: 24
                                 radius: 4
-                                color: model.statusColor
+                                color: model.status === "已完成" ? "#4caf50" : "#ff9800"
 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: model.status
+                                    text: model.status || "未完成"
                                     color: "white"
                                     font.pixelSize: 12
                                     font.bold: true
@@ -272,20 +204,20 @@ Rectangle {
                             color: "#e0e0e0"
                         }
 
-                        // 咨询摘要
+                        // 咨询总结（summary字段）- 显示在上面
                         Column {
                             width: parent.width
-                            spacing: 5
+                            spacing: 2
 
                             Text {
-                                text: "咨询摘要："
+                                text: "咨询总结："
                                 font.pixelSize: 13
                                 color: "#666"
                                 font.bold: true
                             }
 
                             Text {
-                                text: model.summary
+                                text: model.summary || "暂无总结"
                                 font.pixelSize: 14
                                 color: "#333"
                                 width: parent.width
@@ -295,11 +227,10 @@ Rectangle {
                             }
                         }
 
-                        // 自我评价
+                        // 自我评价（selfEvaluation字段）- 显示在咨询总结下面
                         Column {
                             width: parent.width
-                            spacing: 5
-                            visible: model.evaluation !== ""
+                            spacing: 2
 
                             Text {
                                 text: "自我评价："
@@ -309,10 +240,9 @@ Rectangle {
                             }
 
                             Text {
-                                text: model.evaluation
+                                text: model.selfEvaluation
                                 font.pixelSize: 14
-                                color: "#4caf50"
-                                font.bold: true
+                                color: "#333"
                                 width: parent.width
                                 wrapMode: Text.WordWrap
                                 maximumLineCount: 2
@@ -320,7 +250,6 @@ Rectangle {
                             }
                         }
                     }
-
                     // 右侧：查看详情按钮
                     Column {
                         width: 80
@@ -345,7 +274,7 @@ Rectangle {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    console.log("查看咨询日志详情：" + model.logId)
+                                    console.log("查看咨询日志详情：" + model.consultationId)
                                 }
                             }
                         }
@@ -356,7 +285,7 @@ Rectangle {
                             height: 36
                             radius: 8
                             color: "#ff9800"
-                            visible: model.status === "已完成" && model.evaluation === ""
+                            visible: model.status === "已完成" && model.selfEvaluation <= 0
 
                             Text {
                                 anchors.centerIn: parent
@@ -370,7 +299,7 @@ Rectangle {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    console.log("为咨询写评价：" + model.logId)
+                                    console.log("为咨询写评价：" + model.consultationId)
                                 }
                             }
                         }
@@ -413,6 +342,65 @@ Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    // 函数：加载咨询日志
+    function loadConsultationLogs() {
+        isLoading = true
+        consultationLogModel.clear()
+        totalConsultations = 0
+        completedConsultations = 0
+        notCompletedConsultations = 0
+
+        timer.start()
+    }
+
+    Timer {
+        id: timer
+        interval: 100
+        onTriggered: {
+            try {
+                var logs = databaseHandler.getConsultationLogs(currentUserId)
+
+                consultationLogModel.clear()
+
+                for (var i = 0; i < logs.length; i++) {
+                    var log = logs[i]
+
+                    // 统计信息
+                    totalConsultations++
+
+                    if (log.isCompleted) {
+                        completedConsultations++
+                    } else {
+                        notCompletedConsultations++
+                    }
+
+                    // 根据数据库字段映射到页面显示
+                    consultationLogModel.append({
+                        consultationId: log.consultationId || 0,
+                        consultationDate: log.consultationDate || "",
+                        consultationSlot: log.consultationSlot || "",
+                        teacherName: log.teacherName || "未知咨询师",
+                        consultationType: log.consultationType || "未指定",
+                        status: log.isCompleted ? "已完成" : "未完成",
+                        duration: log.duration || 0,
+                        summary: log.summary || "",          // 咨询总结
+                        selfEvaluation: log.selfEvaluation || 0  // 自我评价分数
+                    })
+
+                    // 调试输出
+                    console.log("加载记录", i, "咨询总结:", log.summary, "自我评价:", log.selfEvaluation)
+                }
+
+                console.log("加载了", consultationLogModel.count, "条咨询记录")
+                console.log("统计：总计", totalConsultations, "次，已完成", completedConsultations, "次，未完成", notCompletedConsultations, "次")
+            } catch (error) {
+                console.log("加载咨询记录失败:", error)
+            }
+
+            isLoading = false
         }
     }
 }

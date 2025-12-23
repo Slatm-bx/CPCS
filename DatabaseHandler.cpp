@@ -390,3 +390,740 @@ bool DatabaseHandler::deleteUser(const QString& userId) {
     qDebug() << "✅ 用户已删除:" << userId;
     return true;
 }
+
+
+// ---------------------------------学生端操作-----------------------------------------
+QVariantList DatabaseHandler::getTeachers()
+{
+    QVariantList teachersList;
+
+    // 使用已有的数据库连接
+    if (!m_database.isOpen() && !openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取教师列表";
+        return teachersList;
+    }
+
+    QSqlQuery query(m_database);
+    QString sql = "SELECT user_id, real_name, department, title, specialty "
+                  "FROM teacher_profiles "
+                  "WHERE real_name IS NOT NULL AND real_name != '' "
+                  "ORDER BY "
+                  "CASE "
+                  "  WHEN title LIKE '%教授%' THEN 1 "
+                  "  WHEN title LIKE '%博士%' THEN 2 "
+                  "  WHEN title LIKE '%主任%' THEN 3 "
+                  "  WHEN title LIKE '%医师%' THEN 4 "
+                  "  WHEN title LIKE '%咨询师%' THEN 5 "
+                  "  WHEN title LIKE '%辅导员%' THEN 6 "
+                  "  ELSE 7 "
+                  "END, "
+                  "real_name";
+
+    if (!query.exec(sql)) {
+        qDebug() << "查询教师数据失败:" << query.lastError().text();
+        return teachersList;
+    }
+
+    int count = 0;
+    while (query.next()) {
+        QVariantMap teacher;
+
+        // 直接从数据库获取数据
+        teacher["userId"] = query.value("user_id").toString();
+        teacher["realName"] = query.value("real_name").toString();
+        teacher["department"] = query.value("department").toString();
+        teacher["title"] = query.value("title").toString();
+        teacher["specialty"] = query.value("specialty").toString();
+
+        teachersList.append(teacher);
+        count++;
+    }
+
+    qDebug() << "成功获取" << count << "位心理咨询师";
+    return teachersList;
+}
+
+bool DatabaseHandler::submitTeacherAppointment(const QString &teacherId,
+                                               const QString &studentId,
+                                               const QString &studentName,
+                                               const QString &appointDate,
+                                               const QString &appointSlot,
+                                               const QString &phoneNumber,
+                                               const QString &consultType,
+                                               const QString &problem)
+{
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法提交预约";
+        return false;
+    }
+
+    // 开始事务
+    m_database.transaction();
+
+    try {
+        QSqlQuery query(m_database);
+
+        // 修改SQL，直接使用TEXT类型的teacher_id和student_id
+        query.prepare("INSERT INTO teacherMessage (teacher_id, studentName, appointDate, appoint_slot, "
+                      "phoneNumber, consultType, problom, is_read, is_pass, student_id) "
+                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+        // 直接使用TEXT类型，不需要转换
+        query.addBindValue(teacherId);                  // teacher_id (TEXT)
+        query.addBindValue(studentName);               // studentName (TEXT)
+        query.addBindValue(appointDate);               // appointDate (TEXT)
+        query.addBindValue(appointSlot);               // appoint_slot (TEXT)
+        query.addBindValue(phoneNumber);               // phoneNumber (TEXT)
+        query.addBindValue(consultType);               // consultType (TEXT)
+        query.addBindValue(problem.isEmpty() ? QVariant() : problem); // problom (TEXT)
+        query.addBindValue(0);                         // is_read = 0 (未读)
+        query.addBindValue(1);                         // is_pass = 1 (未通过，待审核)
+        query.addBindValue(studentId);                 // student_id (TEXT)
+
+        if (!query.exec()) {
+            qDebug() << "插入教师预约消息失败:" << query.lastError().text();
+            m_database.rollback();
+            return false;
+        }
+
+        // 获取刚刚插入的记录ID
+        int lastId = query.lastInsertId().toInt();
+
+        // 提交事务
+        m_database.commit();
+
+        qDebug() << "教师预约消息提交成功，记录ID:" << lastId;
+        qDebug() << "教师ID (TEXT):" << teacherId;
+        qDebug() << "学生ID (TEXT):" << studentId;
+        qDebug() << "学生姓名:" << studentName;
+        qDebug() << "预约日期:" << appointDate;
+        qDebug() << "预约时段:" << appointSlot;
+        qDebug() << "联系电话:" << phoneNumber;
+        qDebug() << "咨询类型:" << consultType;
+        qDebug() << "问题描述:" << (problem.isEmpty() ? "未填写" : problem);
+
+        return true;
+
+    } catch (const std::exception &e) {
+        m_database.rollback();
+        qDebug() << "提交预约时发生异常:" << e.what();
+        return false;
+    }
+}
+
+QString DatabaseHandler::getCurrentUserName() const
+{
+    // 如果当前用户ID为空，返回空字符串
+    if (m_currentUserId.isEmpty() || m_currentRole.isEmpty()) {
+        return "";
+    }
+
+    // 如果之前已经获取过姓名，直接返回
+    if (!m_currentUserName.isEmpty()) {
+        return m_currentUserName;
+    }
+
+    // 根据角色从对应的表中获取真实姓名
+    QString realName = "";
+    if (m_currentRole == "student") {
+        // 从学生表中获取
+        QSqlQuery query(m_database);
+        query.prepare("SELECT real_name FROM student_profiles WHERE user_id = ?");
+        query.addBindValue(m_currentUserId);
+        if (query.exec() && query.next()) {
+            realName = query.value(0).toString();
+        }
+    } else if (m_currentRole == "teacher") {
+        // 从教师表中获取
+        QSqlQuery query(m_database);
+        query.prepare("SELECT real_name FROM teacher_profiles WHERE user_id = ?");
+        query.addBindValue(m_currentUserId);
+        if (query.exec() && query.next()) {
+            realName = query.value(0).toString();
+        }
+    }
+
+    // 如果获取不到，使用用户ID作为默认
+    if (realName.isEmpty()) {
+        realName = m_currentUserId;
+    }
+
+    return realName;
+}
+
+QVariantList DatabaseHandler::getConsultationLogs(const QString &studentId)
+{
+    QVariantList logsList;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取咨询日志";
+        return logsList;
+    }
+
+    QSqlQuery query(m_database);
+
+    // 查询学生的咨询日志，关联教师姓名
+    QString sql = "SELECT "
+                  "cl.consultation_id, "
+                  "cl.student_id, "
+                  "cl.teacher_id, "
+                  "cl.consultationDate, "
+                  "cl.consultation_slot, "
+                  "cl.counselor, "
+                  "cl.type, "
+                  "cl.is_completed, "
+                  "cl.duration, "
+                  "cl.summary, "            // 咨询总结
+                  "cl.selfevaluation, "     // 自我评价（改为selfevaluation）
+                  "cl.phoneNumber, "
+                  "tp.real_name as teacher_name, "
+                  "tp.title as teacher_title "
+                  "FROM consultationLog cl "
+                  "LEFT JOIN teacher_profiles tp ON cl.teacher_id = tp.user_id "
+                  "WHERE cl.student_id = ? "
+                  "ORDER BY cl.consultationDate DESC, cl.consultation_slot";
+
+    query.prepare(sql);
+    query.addBindValue(studentId);
+
+    if (!query.exec()) {
+        qDebug() << "查询咨询日志失败:" << query.lastError().text();
+        return logsList;
+    }
+
+    int count = 0;
+    while (query.next()) {
+        QVariantMap log;
+
+        log["consultationId"] = query.value("consultation_id").toInt();
+        log["studentId"] = query.value("student_id").toString();
+        log["teacherId"] = query.value("teacher_id").toString();
+        log["consultationDate"] = query.value("consultationDate").toString();
+        log["consultationSlot"] = query.value("consultation_slot").toString();
+        log["counselor"] = query.value("counselor").toString();
+        log["consultationType"] = query.value("type").toString();
+        log["isCompleted"] = query.value("is_completed").toBool();
+        log["duration"] = query.value("duration").toInt();
+        log["summary"] = query.value("summary").toString();     // 咨询总结
+        log["selfEvaluation"] = query.value("selfevaluation").toString();   // 自我评价（改为selfevaluation）
+        log["phoneNumber"] = query.value("phoneNumber").toString();
+        log["teacherName"] = query.value("teacher_name").toString();
+        log["teacherTitle"] = query.value("teacher_title").toString();
+
+        logsList.append(log);
+        count++;
+    }
+
+    qDebug() << "成功获取" << count << "条咨询日志";
+    return logsList;
+}
+
+QVariantList DatabaseHandler::getPsychologicalLiterature()
+{
+    QVariantList articlesList;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取心理健康文献";
+        return articlesList;
+    }
+
+    QSqlQuery query(m_database);
+
+    // 查询心理健康文献
+    QString sql = "SELECT "
+                  "articleId, "
+                  "title, "
+                  "summary, "
+                  "author, "
+                  "date, "
+                  "readCount, "
+                  "content "
+                  "FROM psychologicalLiterature "
+                  "ORDER BY date DESC, readCount DESC";
+
+    if (!query.exec(sql)) {
+        qDebug() << "查询心理健康文献失败:" << query.lastError().text();
+        return articlesList;
+    }
+
+    // 预定义图标和颜色（因为没有存储在数据库中）
+    QStringList icons = {"📚", "📋", "💭", "😔", "😴", "❤️", "🧠", "🌟", "🎯", "🌈"};
+    QStringList colors = {"#2196f3", "#4caf50", "#ff9800", "#9c27b0", "#795548",
+                          "#e91e63", "#009688", "#673ab7", "#ff5722", "#00bcd4"};
+
+    int count = 0;
+    while (query.next()) {
+        QVariantMap article;
+
+        int articleId = query.value("articleId").toInt();
+        QString title = query.value("title").toString();
+        QString summary = query.value("summary").toString();
+        QString author = query.value("author").toString();
+        QString date = query.value("date").toString();
+        int readCount = query.value("readCount").toInt();
+        QString content = query.value("content").toString();
+
+        // 随机分配图标和颜色（因为数据库中没有存储）
+        int randomIndex = count % icons.size();
+
+        article["articleId"] = articleId;
+        article["title"] = title;
+        article["summary"] = summary;
+        article["author"] = author;
+        article["date"] = date;
+        article["readCount"] = readCount;
+        article["content"] = content;
+        article["icon"] = icons.at(randomIndex);
+        article["color"] = colors.at(randomIndex);
+
+        articlesList.append(article);
+        count++;
+
+        qDebug() << "加载文献:" << title << "作者:" << author << "阅读量:" << readCount;
+    }
+
+    qDebug() << "成功获取" << count << "篇心理健康文献";
+    return articlesList;
+}
+
+bool DatabaseHandler::incrementReadCount(int articleId)
+{
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法更新阅读量";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+
+    // 更新阅读量
+    query.prepare("UPDATE psychologicalLiterature SET readCount = readCount + 1 WHERE articleId = ?");
+    query.addBindValue(articleId);
+
+    if (!query.exec()) {
+        qDebug() << "更新阅读量失败:" << query.lastError().text();
+        return false;
+    }
+
+    if (query.numRowsAffected() > 0) {
+        qDebug() << "文章" << articleId << "阅读量+1";
+        return true;
+    }
+
+    return false;
+}
+
+// 在现有方法后面添加：
+
+QVariantList DatabaseHandler::getStudentAppointmentMessages(const QString &studentId)
+{
+    QVariantList messagesList;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败";
+        return messagesList;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("SELECT SM_id, teacherName, appointDate, appoint_slot, is_read, is_pass, teacher_id "
+                  "FROM studentMessage WHERE student_id = ? ORDER BY SM_id DESC");
+    query.addBindValue(studentId);
+
+    if (!query.exec()) {
+        qDebug() << "查询消息失败:" << query.lastError().text();
+        return messagesList;
+    }
+
+    while (query.next()) {
+        QVariantMap message;
+        int messageId = query.value("SM_id").toInt();
+        QString teacherName = query.value("teacherName").toString();
+        QString appointDate = query.value("appointDate").toString();
+        QString appointSlot = query.value("appoint_slot").toString();
+        bool isRead = query.value("is_read").toInt() == 1;
+        bool isPass = query.value("is_pass").toInt() == 1;
+        QString teacherId = query.value("teacher_id").toString();
+
+        // 根据 is_pass 判断预约状态
+        QString icon = isPass ? "✅" : "❌";
+        QString title = isPass ? "线下咨询预约成功" : "线下咨询预约失败";
+        QString content = isPass ?
+                              QString("您已成功预约%1的线下咨询").arg(teacherName) :
+                              QString("您预约%1的线下咨询未通过").arg(teacherName);
+        QString timeStr = appointDate + " " + appointSlot;
+
+        message["messageId"] = messageId;
+        message["teacherName"] = teacherName;
+        message["appointDate"] = appointDate;
+        message["appointSlot"] = appointSlot;
+        message["isRead"] = isRead;
+        message["isPass"] = isPass;
+        message["icon"] = icon;
+        message["title"] = title;
+        message["content"] = content;
+        message["time"] = timeStr;
+        message["counselor"] = teacherName;
+        message["appointmentTime"] = timeStr;
+        message["read"] = isRead;
+        message["teacherId"] = teacherId;
+
+        messagesList.append(message);
+    }
+
+    qDebug() << "获取到" << messagesList.size() << "条学生消息";
+    return messagesList;
+}
+
+// 标记消息为已读
+bool DatabaseHandler::markMessageAsRead(int messageId)
+{
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("UPDATE studentMessage SET is_read = 1 WHERE SM_id = ?");
+    query.addBindValue(messageId);
+    return query.exec();
+}
+
+// 删除学生消息
+bool DatabaseHandler::deleteStudentMessage(int messageId)
+{
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("DELETE FROM studentMessage WHERE SM_id = ?");
+    query.addBindValue(messageId);
+    return query.exec();
+}
+
+// 获取学生个人信息
+QVariantMap DatabaseHandler::getStudentProfile(const QString &studentId)
+{
+    QVariantMap profile;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取学生信息";
+        return profile;
+    }
+
+    QSqlQuery query(m_database);
+    // 修改SQL查询，不再查询username字段
+    query.prepare("SELECT real_name, college, major, entry_year, gender "
+                  "FROM student_profiles "
+                  "WHERE user_id = ?");
+    query.addBindValue(studentId);
+
+    if (!query.exec()) {
+        qDebug() << "查询学生信息失败:" << query.lastError().text();
+        return profile;
+    }
+
+    if (query.next()) {
+        profile["realName"] = query.value("real_name").toString();
+        profile["college"] = query.value("college").toString();
+        profile["major"] = query.value("major").toString();
+        profile["entryYear"] = query.value("entry_year").toInt();
+        profile["gender"] = query.value("gender").toString();
+
+        // 计算年级
+        int entryYear = query.value("entry_year").toInt();
+        if (entryYear > 0) {
+            profile["grade"] = QString("%1级").arg(entryYear);
+        } else {
+            profile["grade"] = "未知年级";
+        }
+
+        // 性别对应的头像
+        QString gender = query.value("gender").toString();
+        if (gender == "男") {
+            profile["avatar"] = "👨‍🎓";
+        } else if (gender == "女") {
+            profile["avatar"] = "👩‍🎓";
+        } else {
+            profile["avatar"] = "👤";
+        }
+
+        qDebug() << "获取到学生信息:" << profile["realName"].toString();
+    } else {
+        qDebug() << "学生信息不存在，创建默认信息";
+        // 如果学生信息不存在，创建默认记录
+        QSqlQuery insertQuery(m_database);
+        insertQuery.prepare("INSERT INTO student_profiles (user_id, real_name) "
+                            "VALUES (?, '新用户')");
+        insertQuery.addBindValue(studentId);
+        if (insertQuery.exec()) {
+            profile["realName"] = "新用户";
+            profile["avatar"] = "👤";
+            profile["college"] = "";
+            profile["major"] = "";
+            profile["grade"] = "";
+        }
+    }
+
+    return profile;
+}
+
+// 更新学生个人信息
+bool DatabaseHandler::updateStudentProfile(const QString &studentId,
+                                           const QString &realName,
+                                           const QString &college,
+                                           const QString &major,
+                                           int entryYear,
+                                           const QString &gender)
+{
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法更新学生信息";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+
+    // 检查记录是否存在
+    query.prepare("SELECT COUNT(*) FROM student_profiles WHERE user_id = ?");
+    query.addBindValue(studentId);
+    if (!query.exec() || !query.next()) {
+        qDebug() << "检查学生记录失败";
+        return false;
+    }
+
+    int count = query.value(0).toInt();
+
+    if (count > 0) {
+        // 更新现有记录
+        query.prepare("UPDATE student_profiles SET "
+                      "real_name = ?, college = ?, major = ?, entry_year = ?, gender = ? "
+                      "WHERE user_id = ?");
+        query.addBindValue(realName);
+        query.addBindValue(college);
+        query.addBindValue(major);
+        query.addBindValue(entryYear);
+        query.addBindValue(gender);
+        query.addBindValue(studentId);
+    } else {
+        // 插入新记录
+        query.prepare("INSERT INTO student_profiles (user_id, real_name, college, major, entry_year, gender) "
+                      "VALUES (?, ?, ?, ?, ?, ?)");
+        query.addBindValue(studentId);
+        query.addBindValue(realName);
+        query.addBindValue(college);
+        query.addBindValue(major);
+        query.addBindValue(entryYear);
+        query.addBindValue(gender);
+    }
+
+    if (!query.exec()) {
+        qDebug() << "更新学生信息失败:" << query.lastError().text();
+        return false;
+    }
+
+    qDebug() << "学生信息更新成功";
+    return true;
+}
+
+// 获取学生统计信息
+QVariantMap DatabaseHandler::getStudentStatistics(const QString &studentId)
+{
+    QVariantMap stats;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取统计信息";
+        return stats;
+    }
+
+    QSqlQuery query(m_database);
+
+    // 咨询次数
+    query.prepare("SELECT COUNT(*) FROM consultationLog WHERE student_id = ?");
+    query.addBindValue(studentId);
+    if (query.exec() && query.next()) {
+        stats["consultationCount"] = query.value(0).toInt();
+    }
+
+    // 文献阅读次数 - 如果articleReadLog表不存在，注释掉这部分
+    // query.prepare("SELECT COUNT(*) FROM articleReadLog WHERE user_id = ?");
+    // query.addBindValue(studentId);
+    // if (query.exec() && query.next()) {
+    //     stats["literatureReadCount"] = query.value(0).toInt();
+    // }
+
+    // 咨询总时长
+    query.prepare("SELECT SUM(duration) FROM consultationLog WHERE student_id = ?");
+    query.addBindValue(studentId);
+    if (query.exec() && query.next()) {
+        int totalMinutes = query.value(0).toInt();
+        stats["totalMinutes"] = totalMinutes;
+    }
+
+    // 心理测试次数 - 如果testRecords表不存在，注释掉这部分
+    // query.prepare("SELECT COUNT(*) FROM testRecords WHERE student_id = ?");
+    // query.addBindValue(studentId);
+    // if (query.exec() && query.next()) {
+    //     stats["testCount"] = query.value(0).toInt();
+    // }
+
+    // 设置默认值（如果没有数据）
+    stats["consultationCount"] = stats.contains("consultationCount") ? stats["consultationCount"].toInt() : 0;
+    stats["literatureReadCount"] = stats.contains("literatureReadCount") ? stats["literatureReadCount"].toInt() : 0;
+    stats["totalMinutes"] = stats.contains("totalMinutes") ? stats["totalMinutes"].toInt() : 0;
+    stats["testCount"] = stats.contains("testCount") ? stats["testCount"].toInt() : 0;
+
+    qDebug() << "获取统计信息: 咨询" << stats["consultationCount"].toInt()
+             << "次，文献" << stats["literatureReadCount"].toInt()
+             << "篇，时长" << stats["totalMinutes"].toInt() << "分钟";
+
+    return stats;
+}
+
+// 获取所有测试类型
+QVariantList DatabaseHandler::getPsychologicalTestTypes()
+{
+    QVariantList testTypes;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取测试类型";
+        return testTypes;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("SELECT DISTINCT type FROM PsychologicalTest");
+
+    if (!query.exec()) {
+        qDebug() << "查询测试类型失败:" << query.lastError().text();
+        return testTypes;
+    }
+
+    while (query.next()) {
+        QString type = query.value("type").toString();
+        if (!type.isEmpty()) {
+            testTypes.append(type);
+        }
+    }
+
+    qDebug() << "获取到" << testTypes.size() << "种测试类型";
+    return testTypes;
+}
+
+// 获取特定类型的测试题目
+QVariantList DatabaseHandler::getPsychologicalTestQuestions(const QString &testType)
+{
+    QVariantList questionsList;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取测试题目";
+        return questionsList;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("SELECT type, p1, p2, p3, p4, p5 FROM PsychologicalTest WHERE type = ?");
+    query.addBindValue(testType);
+
+    if (!query.exec()) {
+        qDebug() << "查询测试题目失败:" << query.lastError().text();
+        return questionsList;
+    }
+
+    if (query.next()) {
+        // 解析题目，每个测试有5个题目
+        QString testTypeName = query.value("type").toString();
+        qDebug() << "找到测试类型：" << testTypeName;
+
+        for (int i = 1; i <= 5; i++) {
+            QVariantMap question;
+            question["questionId"] = i;
+            QString questionText = query.value("p" + QString::number(i)).toString();
+            question["questionText"] = questionText;
+            question["testType"] = testTypeName; // 传递测试类型到QML
+
+            questionsList.append(question);
+            qDebug() << "加载题目" << i << ":" << questionText;
+        }
+    } else {
+        qDebug() << "未找到" << testType << "的测试题目";
+    }
+
+    qDebug() << "获取到" << questionsList.size() << "个" << testType << "题目";
+    return questionsList;
+}
+
+// 保存测试结果
+bool DatabaseHandler::saveTestResult(const QString &studentId,
+                                     const QString &testName,
+                                     const QString &testType,
+                                     const QString &date,
+                                     int score,
+                                     const QString &result,
+                                     const QString &status)
+{
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法保存测试结果";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("INSERT INTO testRecords (student_id, testName, testType, date, score, result, status) "
+                  "VALUES (?, ?, ?, ?, ?, ?, ?)");
+
+    query.addBindValue(studentId);
+    query.addBindValue(testName);
+    query.addBindValue(testType);
+    query.addBindValue(date);
+    query.addBindValue(score);
+    query.addBindValue(result);
+    query.addBindValue(status);
+
+    if (!query.exec()) {
+        qDebug() << "保存测试结果失败:" << query.lastError().text();
+        return false;
+    }
+
+    qDebug() << "测试结果保存成功: " << testName
+             << ", 学生ID:" << studentId
+             << ", 分数:" << score
+             << ", 结果:" << result;
+    return true;
+}
+
+// 获取测试历史记录
+QVariantList DatabaseHandler::getTestHistory(const QString &studentId)
+{
+    QVariantList historyList;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取测试历史";
+        return historyList;
+    }
+
+    QSqlQuery query(m_database);
+
+    query.prepare("SELECT testName, testType, date, score, result, status "
+                  "FROM testRecords "
+                  "WHERE student_id = ? "
+                  "ORDER BY date DESC");
+
+    query.addBindValue(studentId);
+
+    if (!query.exec()) {
+        qDebug() << "查询测试历史失败:" << query.lastError().text();
+        return historyList;
+    }
+
+    while (query.next()) {
+        QVariantMap record;
+        record["testName"] = query.value("testName").toString();
+        record["testType"] = query.value("testType").toString();
+        record["date"] = query.value("date").toString();
+        record["score"] = query.value("score").toInt();
+        record["result"] = query.value("result").toString();
+        record["status"] = query.value("status").toString();
+
+        historyList.append(record);
+    }
+
+    qDebug() << "获取到" << historyList.size() << "条测试历史记录";
+    return historyList;
+}

@@ -6,8 +6,7 @@ Rectangle {
     id: counselorChatPage
     color: "#f0f8ff"
 
-    property var currentCounselor: null
-    property bool inChatRoom: false
+    property bool isLoading: false
     property bool showAppointmentDialog: false
     property var selectedCounselorForAppointment: null
 
@@ -38,81 +37,110 @@ Rectangle {
     property string problemDescription: ""
     property string contactPhone: ""
 
-    // 导师数据模型 - 简化到4位老师
+    // 导师数据模型
     ListModel {
         id: counselorModel
-        ListElement {
-            counselorId: "counselor1"
-            name: "张教授"
-            title: "心理咨询师"
-            avatar: "👨‍🏫"
-            specialty: "焦虑情绪、压力管理"
-            rating: "4.8"
-            status: "在线"
-            statusColor: "#4caf50"
-            consultationTimes: "周一至周五 9:00-17:00"
-        }
-        ListElement {
-            counselorId: "counselor2"
-            name: "李老师"
-            title: "心理辅导师"
-            avatar: "👩‍🏫"
-            specialty: "人际关系、自我成长"
-            rating: "4.7"
-            status: "在线"
-            statusColor: "#4caf50"
-            consultationTimes: "周二、周四 10:00-18:00"
-        }
-        ListElement {
-            counselorId: "counselor3"
-            name: "王医生"
-            title: "临床心理医师"
-            avatar: "👨‍⚕️"
-            specialty: "抑郁情绪、睡眠问题"
-            rating: "4.9"
-            status: "忙碌"
-            statusColor: "#ff9800"
-            consultationTimes: "周三、周五 8:30-16:30"
-        }
-        ListElement {
-            counselorId: "counselor4"
-            name: "刘老师"
-            title: "心理咨询师"
-            avatar: "👩‍💼"
-            specialty: "学业压力、职业规划"
-            rating: "4.6"
-            status: "离线"
-            statusColor: "#9e9e9e"
-            consultationTimes: "周一、周三 13:00-21:00"
-        }
+    }
+
+    // 组件加载时从数据库获取数据
+    Component.onCompleted: {
+        loadTeachersFromDatabase()
     }
 
     // 导师列表页面
     Rectangle {
         id: counselorListPage
         anchors.fill: parent
-        visible: !inChatRoom && !showAppointmentDialog
+        visible: !showAppointmentDialog
 
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 20
             spacing: 15
 
-            Text {
-                text: "心理导师列表"
-                font.pixelSize: 26
-                font.bold: true
-                color: "#1976d2"
+            // 标题和刷新按钮
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 15
+
+                Text {
+                    text: "心理咨询师列表"
+                    font.pixelSize: 26
+                    font.bold: true
+                    color: "#1976d2"
+                    Layout.fillWidth: true
+                }
+
+                // 刷新按钮
+                Rectangle {
+                    width: 40
+                    height: 40
+                    radius: 8
+                    color: isLoading ? "#e0e0e0" : "#e3f2fd"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "↻"
+                        color: isLoading ? "#999" : "#1976d2"
+                        font.pixelSize: 18
+                        font.bold: true
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        enabled: !isLoading
+                        onClicked: {
+                            loadTeachersFromDatabase()
+                        }
+                    }
+                }
             }
 
+            // 加载指示器
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 100
+                visible: isLoading && counselorModel.count === 0
+                color: "transparent"
+
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 15
+
+                    BusyIndicator {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 40
+                        height: 40
+                    }
+
+                    Text {
+                        text: "正在加载心理咨询师数据..."
+                        font.pixelSize: 14
+                        color: "#666"
+                    }
+                }
+            }
+
+            // 无数据提示
+            Text {
+                Layout.alignment: Qt.AlignCenter
+                text: "暂无可用的心理咨询师"
+                font.pixelSize: 16
+                color: "#999"
+                visible: !isLoading && counselorModel.count === 0
+            }
+
+            // 导师网格列表 - 一行显示两个
             GridView {
                 id: counselorGridView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                cellWidth: parent.width / 2 - 10
-                cellHeight: 270
                 clip: true
                 model: counselorModel
+                visible: !isLoading && counselorModel.count > 0
+                cellWidth: parent.width / 2 - 10
+                cellHeight: 220
 
                 delegate: Rectangle {
                     width: counselorGridView.cellWidth - 10
@@ -124,115 +152,112 @@ Rectangle {
 
                     Column {
                         anchors.fill: parent
-                        anchors.margins: 15
-                        spacing: 12
+                        anchors.margins: 12
+                        spacing: 8
 
-                        // 头像和状态
-                        Rectangle {
+                        // 顶部：姓名和职称
+                        Row {
                             width: parent.width
-                            height: 70
+                            spacing: 8
 
-                            Row {
-                                spacing: 12
+                            // 图标
+                            Rectangle {
+                                width: 45
+                                height: 45
+                                radius: 22.5
+                                color: "#e3f2fd"
 
-                                Rectangle {
-                                    width: 55
-                                    height: 55
-                                    radius: 27.5
-                                    color: "#e3f2fd"
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: model.avatar
-                                        font.pixelSize: 22
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: {
+                                        if (model.title && model.title.includes("教授")) return "👨‍🏫"
+                                        if (model.title && model.title.includes("博士")) return "👨‍🎓"
+                                        if (model.title && model.title.includes("医师")) return "👨‍⚕️"
+                                        if (model.title && model.title.includes("老师")) return "👩‍🏫"
+                                        return "👨‍💼"
                                     }
+                                    font.pixelSize: 20
+                                }
+                            }
 
-                                    Rectangle {
-                                        width: 12
-                                        height: 12
-                                        radius: 6
-                                        color: model.statusColor
-                                        anchors.right: parent.right
-                                        anchors.bottom: parent.bottom
-                                        border.width: 2
-                                        border.color: "white"
-                                    }
+                            Column {
+                                width: parent.width - 55
+                                spacing: 2
+
+                                Text {
+                                    text: model.realName || "未命名"
+                                    font.pixelSize: 16
+                                    font.bold: true
+                                    color: "#1976d2"
+                                    width: parent.width
+                                    elide: Text.ElideRight
                                 }
 
-                                Column {
-                                    spacing: 4
-                                    anchors.verticalCenter: parent.verticalCenter
-
-                                    Text {
-                                        text: model.name
-                                        font.pixelSize: 16
-                                        font.bold: true
-                                        color: "#1976d2"
-                                    }
-
-                                    Text {
-                                        text: model.title
-                                        font.pixelSize: 13
-                                        color: "#666"
-                                    }
-
-                                    Row {
-                                        spacing: 4
-                                        Text {
-                                            text: "★"
-                                            color: "#ff9800"
-                                            font.pixelSize: 13
-                                        }
-                                        Text {
-                                            text: model.rating
-                                            font.pixelSize: 13
-                                            color: "#666"
-                                            font.bold: true
-                                        }
-                                    }
+                                Text {
+                                    text: model.title || "心理咨询师"
+                                    font.pixelSize: 12
+                                    color: "#666"
+                                    width: parent.width
+                                    elide: Text.ElideRight
                                 }
                             }
                         }
 
+                        // 部门信息
                         Text {
-                            text: "专长："
-                            font.pixelSize: 13
+                            text: model.department ? "🏢 " + model.department : ""
+                            font.pixelSize: 11
                             color: "#666"
-                        }
-
-                        Text {
-                            text: model.specialty
-                            font.pixelSize: 14
-                            color: "#1976d2"
-                            font.bold: true
                             width: parent.width
-                            wrapMode: Text.WordWrap
+                            wrapMode: Text.Wrap
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
+                            visible: model.department && model.department !== ""
                         }
 
-                        Text {
-                            text: "时间："
-                            font.pixelSize: 13
-                            color: "#666"
-                        }
-
-                        Text {
-                            text: model.consultationTimes
-                            font.pixelSize: 13
-                            color: "#888"
-                            width: parent.width
-                            wrapMode: Text.WordWrap
-                        }
-
-                        // 按钮区域
+                        // 分隔线
                         Rectangle {
-                            width: (parent.width - 10)
-                            height: 34
-                            radius: 8
+                            width: parent.width
+                            height: 1
+                            color: "#f0f0f0"
+                            visible: model.department && model.department !== ""
+                        }
+
+                        // 专业方向
+                        Column {
+                            width: parent.width
+                            spacing: 2
+
+                            Text {
+                                text: "📚 专业方向："
+                                font.pixelSize: 11
+                                color: "#888"
+                                width: parent.width
+                            }
+
+                            Text {
+                                text: model.specialty || "心理咨询与辅导"
+                                font.pixelSize: 13
+                                color: "#1976d2"
+                                font.bold: true
+                                width: parent.width
+                                wrapMode: Text.Wrap
+                                maximumLineCount: 3
+                                elide: Text.ElideRight
+                                lineHeight: 1.2
+                            }
+                        }
+
+                        // 底部：预约按钮
+                        Rectangle {
+                            width: parent.width
+                            height: 32
+                            radius: 6
                             color: "#4caf50"
 
                             Text {
                                 anchors.centerIn: parent
-                                text: "线下预约"
+                                text: "预约咨询"
                                 color: "white"
                                 font.pixelSize: 13
                                 font.bold: true
@@ -242,12 +267,16 @@ Rectangle {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    showAppointmentDialog = true
+                                    // 设置选中的咨询师并显示预约对话框
                                     selectedCounselorForAppointment = {
-                                        name: model.name,
+                                        userId: model.userId,           // 关键修改：保存教师ID
+                                        name: model.realName,
                                         title: model.title,
-                                        avatar: model.avatar
+                                        department: model.department,
+                                        specialty: model.specialty
                                     }
+                                    console.log("选择教师:", model.realName, "教师ID:", model.userId)
+                                    showAppointmentDialog = true
                                 }
                             }
                         }
@@ -257,7 +286,7 @@ Rectangle {
         }
     }
 
-    // 预约对话框 - 简化版本
+    // 预约对话框
     Rectangle {
         id: appointmentDialog
         anchors.fill: parent
@@ -329,7 +358,14 @@ Rectangle {
 
                         Text {
                             anchors.centerIn: parent
-                            text: selectedCounselorForAppointment ? selectedCounselorForAppointment.avatar : "👨‍🏫"
+                            text: selectedCounselorForAppointment ? (function() {
+                                var title = selectedCounselorForAppointment.title || "";
+                                if (title.includes("教授")) return "👨‍🏫";
+                                if (title.includes("博士")) return "👨‍🎓";
+                                if (title.includes("医师")) return "👨‍⚕️";
+                                if (title.includes("老师")) return "👩‍🏫";
+                                return "👨‍💼";
+                            })() : "👨‍🏫"
                             font.pixelSize: 20
                         }
                     }
@@ -350,11 +386,19 @@ Rectangle {
                             font.pixelSize: 14
                             color: "#666"
                         }
+
+                        Text {
+                            text: selectedCounselorForAppointment && selectedCounselorForAppointment.department ?
+                                  selectedCounselorForAppointment.department : ""
+                            font.pixelSize: 12
+                            color: "#888"
+                            visible: selectedCounselorForAppointment && selectedCounselorForAppointment.department
+                        }
                     }
                 }
             }
 
-            // 表单区域 - 不使用ScrollView，简化布局
+            // 表单区域
             ColumnLayout {
                 spacing: 15
                 Layout.fillWidth: true
@@ -488,7 +532,6 @@ Rectangle {
                 }
 
                 // 咨询类型选择
-                // 咨询类型选择 - 修改这部分
                 ColumnLayout {
                     spacing: 8
                     Layout.fillWidth: true
@@ -500,13 +543,11 @@ Rectangle {
                         color: "#333"
                     }
 
-                    // 使用Flow或Grid代替Row
                     Flow {
                         id: consultationTypeFlow
                         Layout.fillWidth: true
                         spacing: 10
 
-                        // 计算每个项目的宽度
                         property int itemWidth: (parent.width - 20) / 2
 
                         Repeater {
@@ -617,6 +658,7 @@ Rectangle {
                         border.width: 1
 
                         TextField {
+                            id: phoneInput
                             anchors.fill: parent
                             anchors.margins: 5
                             placeholderText: "请输入手机号码"
@@ -633,17 +675,13 @@ Rectangle {
                 }
             }
 
-            // 提交按钮
+            // 提交按钮 - 最简单的逻辑
             Rectangle {
                 id: submitButton
                 Layout.fillWidth: true
                 height: 48
                 radius: 8
-                color: canSubmit ? "#4caf50" : "#bdbdbd"
-
-                property bool canSubmit: selectedTime !== "" &&
-                                         selectedConsultationType !== "" &&
-                                         contactPhone.length >= 11
+                color: "#4caf50"
 
                 Text {
                     anchors.centerIn: parent
@@ -656,9 +694,8 @@ Rectangle {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    enabled: submitButton.canSubmit
                     onClicked: {
-                        submitAppointment()
+                        submitAppointment()  // 调用提交函数
                     }
                 }
             }
@@ -674,8 +711,8 @@ Rectangle {
         z: 200
 
         Rectangle {
-            width: 280
-            height: 160
+            width: 320
+            height: 200
             radius: 12
             color: "white"
             anchors.centerIn: parent
@@ -683,7 +720,7 @@ Rectangle {
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 20
-                spacing: 8
+                spacing: 10
 
                 Text {
                     text: "✅"
@@ -694,7 +731,7 @@ Rectangle {
 
                 Text {
                     text: "预约成功！"
-                    font.pixelSize: 16
+                    font.pixelSize: 18
                     font.bold: true
                     color: "#4caf50"
                     horizontalAlignment: Text.AlignHCenter
@@ -702,11 +739,10 @@ Rectangle {
                 }
 
                 Text {
-                    text: "预约信息已提交\n请按时前往心理中心"
-                    font.pixelSize: 13
+                    text: "预约信息已成功提交"
+                    font.pixelSize: 14
                     color: "#666"
                     horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.Wrap
                     Layout.fillWidth: true
                 }
 
@@ -738,6 +774,51 @@ Rectangle {
         }
     }
 
+    // 函数：从数据库加载心理咨询师
+    function loadTeachersFromDatabase() {
+        isLoading = true
+        counselorModel.clear()
+
+        timer.start()
+    }
+
+    Timer {
+        id: timer
+        interval: 100
+        onTriggered: {
+            try {
+                var teachers = databaseHandler.getTeachers()
+
+                counselorModel.clear()
+
+                for (var i = 0; i < teachers.length; i++) {
+                    var teacher = teachers[i]
+
+                    counselorModel.append({
+                        userId: teacher.userId || "",  // 确保这里有userId
+                        realName: teacher.realName || "未命名",
+                        department: teacher.department || "",
+                        title: teacher.title || "心理咨询师",
+                        specialty: teacher.specialty || "心理咨询与辅导"
+                    })
+
+                    console.log("加载教师:", teacher.realName, "ID:", teacher.userId) // 调试输出
+                }
+
+                console.log("从数据库加载了", counselorModel.count, "位心理咨询师")
+
+                // 如果没有数据，可以在这里添加一个提示
+                if (counselorModel.count === 0) {
+                    console.log("数据库中没有心理咨询师数据")
+                }
+            } catch (error) {
+                console.log("加载心理咨询师数据失败:", error)
+            }
+
+            isLoading = false
+        }
+    }
+
     // 函数：重置预约表单
     function resetAppointmentForm() {
         appointmentDate = Qt.formatDate(new Date(), "yyyy-MM-dd")
@@ -750,15 +831,53 @@ Rectangle {
     // 函数：提交预约
     function submitAppointment() {
         console.log("=== 预约信息提交 ===")
+        console.log("选中的咨询师对象:", selectedCounselorForAppointment)
         console.log("导师：" + (selectedCounselorForAppointment ? selectedCounselorForAppointment.name : ""))
+        console.log("导师ID：" + (selectedCounselorForAppointment ? selectedCounselorForAppointment.userId : "未获取到"))
         console.log("日期：" + appointmentDate)
         console.log("时间：" + selectedTime)
         console.log("咨询类型：" + selectedConsultationType)
-        console.log("问题描述：" + problemDescription)
+        console.log("问题描述：" + (problemDescription || "未填写"))
         console.log("联系电话：" + contactPhone)
         console.log("==================")
 
-        // 显示成功提示
-        successDialog.visible = true
+        // 获取教师ID（直接从数据库返回的userId）
+        var teacherId = ""
+        if (selectedCounselorForAppointment && selectedCounselorForAppointment.userId) {
+            teacherId = selectedCounselorForAppointment.userId
+            console.log("成功获取教师ID:", teacherId)
+        } else {
+            console.error("无法获取教师ID，选中的咨询师对象:", selectedCounselorForAppointment)
+            return
+        }
+
+        // 获取当前登录的学生ID和姓名
+        var studentId = databaseHandler.getCurrentUserId()
+        var studentName = databaseHandler.getCurrentUserName()
+
+        if (!studentName || studentName === "") {
+            studentName = "未知学生" // 如果无法获取姓名，使用默认值
+        }
+
+        // 调用数据库方法提交预约
+        var success = databaseHandler.submitTeacherAppointment(
+            teacherId,            // 教师ID
+            studentId,            // 学生ID
+            studentName,          // 学生姓名
+            appointmentDate,      // 预约日期
+            selectedTime,         // 预约时段
+            contactPhone,         // 联系电话
+            selectedConsultationType, // 咨询类型
+            problemDescription    // 问题描述
+        )
+
+        if (success) {
+            console.log("预约信息已成功保存到数据库")
+            // 显示成功提示
+            successDialog.visible = true
+        } else {
+            console.log("预约信息保存失败")
+            // 可以在这里显示失败提示
+        }
     }
 }

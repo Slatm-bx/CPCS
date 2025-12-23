@@ -5,118 +5,71 @@ Rectangle {
     id: messageCenterPage
     color: "#e8f5e8"
 
-    // 消息数据模型 - 只包含预约消息
+    // 消息数据模型
     ListModel {
         id: messageModel
+    }
 
-        ListElement {
-            messageId: "msg1"
-            title: "线下咨询预约成功"
-            content: "您已成功预约张教授的线下咨询"
-            time: "今天 15:30"
-            counselor: "张教授"
-            appointmentTime: "2023-12-22 14:00-15:00"
-            read: false
-            icon: "✅"
+    // 页面加载时获取消息
+    Component.onCompleted: {
+        loadMessages();
+    }
+
+    // 加载消息
+    function loadMessages() {
+        if (!databaseHandler) {
+            console.log("错误：databaseHandler对象不存在");
+            return;
         }
 
-        ListElement {
-            messageId: "msg2"
-            title: "线下咨询预约成功"
-            content: "您已成功预约李老师的线下咨询"
-            time: "昨天 09:15"
-            counselor: "李老师"
-            appointmentTime: "2023-12-25 10:00-11:00"
-            read: true
-            icon: "✅"
+        var studentId = databaseHandler.getCurrentUserId();
+        if (!studentId) {
+            console.log("错误：未获取到学生ID");
+            return;
         }
 
-        ListElement {
-            messageId: "msg3"
-            title: "线下咨询预约失败"
-            content: "您预约的时间段已被占用，预约失败"
-            time: "12月19日 14:20"
-            counselor: "王医生"
-            appointmentTime: "2023-12-23 16:00-17:00"
-            read: true
-            icon: "❌"
+        console.log("正在获取学生ID：" + studentId + " 的消息");
+
+        // 从数据库获取消息
+        var messages = databaseHandler.getStudentAppointmentMessages(studentId);
+
+        // 清空并添加消息
+        messageModel.clear();
+        for (var i = 0; i < messages.length; i++) {
+            var msg = messages[i];
+            messageModel.append({
+                messageId: msg.messageId,
+                title: msg.title,
+                content: msg.content,
+                time: msg.time,
+                counselor: msg.counselor,
+                appointmentTime: msg.appointmentTime,
+                read: msg.read,
+                icon: msg.icon
+            });
         }
 
-        ListElement {
-            messageId: "msg4"
-            title: "线下咨询预约成功"
-            content: "您已成功预约刘老师的线下咨询"
-            time: "12月18日 11:45"
-            counselor: "刘老师"
-            appointmentTime: "2023-12-28 15:00-16:00"
-            read: true
-            icon: "✅"
-        }
+        console.log("成功加载了" + messageModel.count + "条消息");
+    }
 
-        ListElement {
-            messageId: "msg5"
-            title: "线下咨询预约失败"
-            content: "导师临时有事，预约已取消"
-            time: "12月17日 16:30"
-            counselor: "陈老师"
-            appointmentTime: "2023-12-24 11:00-12:00"
-            read: true
-            icon: "❌"
+    // 标记消息为已读
+    function markMessageRead(messageId, index) {
+        if (databaseHandler && databaseHandler.markMessageAsRead(messageId)) {
+            messageModel.setProperty(index, "read", true);
         }
+    }
 
-        ListElement {
-            messageId: "msg6"
-            title: "线下咨询预约成功"
-            content: "您已成功预约赵老师的线下咨询"
-            time: "12月16日 13:10"
-            counselor: "赵老师"
-            appointmentTime: "2023-12-29 09:30-10:30"
-            read: true
-            icon: "✅"
-        }
-
-        ListElement {
-            messageId: "msg7"
-            title: "线下咨询预约失败"
-            content: "系统维护中，预约未成功"
-            time: "12月15日 10:25"
-            counselor: "周老师"
-            appointmentTime: "2023-12-26 14:30-15:30"
-            read: true
-            icon: "❌"
-        }
-
-        ListElement {
-            messageId: "msg8"
-            title: "线下咨询预约成功"
-            content: "您已成功预约吴老师的线下咨询"
-            time: "12月14日 16:40"
-            counselor: "吴老师"
-            appointmentTime: "2023-12-30 16:00-17:00"
-            read: true
-            icon: "✅"
-        }
-
-        ListElement {
-            messageId: "msg9"
-            title: "线下咨询预约失败"
-            content: "超过可预约时间范围"
-            time: "12月13日 08:55"
-            counselor: "郑老师"
-            appointmentTime: "2023-12-31 18:00-19:00"
-            read: true
-            icon: "❌"
-        }
-
-        ListElement {
-            messageId: "msg10"
-            title: "线下咨询预约成功"
-            content: "您已成功预约孙老师的线下咨询"
-            time: "12月12日 14:15"
-            counselor: "孙老师"
-            appointmentTime: "2024-01-02 10:00-11:00"
-            read: true
-            icon: "✅"
+    // 删除消息
+    function deleteMessage(messageId, index) {
+        console.log("尝试删除消息ID：" + messageId + "，索引：" + index);
+        if (databaseHandler) {
+            var success = databaseHandler.deleteStudentMessage(messageId);
+            console.log("数据库删除结果：" + success);
+            if (success) {
+                messageModel.remove(index);
+            }
+        } else {
+            console.log("databaseHandler不存在");
         }
     }
 
@@ -150,6 +103,18 @@ Rectangle {
                 color: model.read ? "white" : "#f1f8e9"
                 border.color: model.read ? "#e0e0e0" : "#4caf50"
                 border.width: 1
+
+                // 主区域点击（查看消息）
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (!model.read) {
+                            markMessageRead(model.messageId, index);
+                        }
+                        console.log("查看消息：" + model.title);
+                    }
+                }
 
                 Row {
                     anchors.fill: parent
@@ -238,8 +203,9 @@ Rectangle {
                         }
                     }
 
-                    // 删除按钮 - 已修改为红色"❌"
+                    // 删除按钮
                     Rectangle {
+                        id: deleteButton
                         width: 40
                         height: 40
                         radius: 20
@@ -258,19 +224,10 @@ Rectangle {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                // 从模型中删除当前项
-                                messageModel.remove(index)
+                                console.log("删除按钮被点击");
+                                deleteMessage(model.messageId, index);
                             }
                         }
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        messageModel.setProperty(index, "read", true)
-                        console.log("查看消息：" + model.title)
                     }
                 }
             }
