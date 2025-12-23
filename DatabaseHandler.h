@@ -102,6 +102,9 @@ public:
     // 获取测试历史记录
     Q_INVOKABLE QVariantList getTestHistory(const QString &studentId);
 
+    // --- 管理员咨询监管操作 ---
+    // 获取所有咨询记录（关联学生姓名）
+    Q_INVOKABLE QVariantList getAllConsultationLogs();
 
 private:
     bool openDatabase();

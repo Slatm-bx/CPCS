@@ -42,6 +42,22 @@ Item {
         articleDialog.openForEdit(articleId, title, summary, content)
     }
 
+    // 打开咨询详情弹窗
+    function openConsultationDetailDialog(consultationId, studentName, counselor,
+                                          consultationDate, consultationType,
+                                          duration, phoneNumber, selfEvaluation, summary) {
+        consultationDetailDialog.consultationId = consultationId
+        consultationDetailDialog.studentName = studentName
+        consultationDetailDialog.counselor = counselor
+        consultationDetailDialog.consultationDate = consultationDate
+        consultationDetailDialog.consultationType = consultationType
+        consultationDetailDialog.duration = duration
+        consultationDetailDialog.phoneNumber = phoneNumber
+        consultationDetailDialog.selfEvaluation = selfEvaluation
+        consultationDetailDialog.summary = summary
+        consultationDetailDialog.open()
+    }
+
     // // 公共函数：打开各种弹窗
     // function openAddUserDialog() {
     //     addUserDialog.open()
@@ -1003,5 +1019,239 @@ Item {
         title: "⚠️ 内容不完整"
         text: "请输入文章标题！"
         buttons: MessageDialog.Ok
+    }
+
+    // ==========================================
+    // 5. 咨询详情弹窗
+    // ==========================================
+    Dialog {
+        id: consultationDetailDialog
+        anchors.centerIn: parent
+        width: 550
+        height: 500
+        modal: true
+        title: "📋 咨询详情"
+
+        // 咨询详情数据
+        property int consultationId: 0
+        property string studentName: ""
+        property string counselor: ""
+        property string consultationDate: ""
+        property string consultationType: ""
+        property int duration: 0
+        property string phoneNumber: ""
+        property string selfEvaluation: ""
+        property string summary: ""
+
+        ScrollView {
+            anchors.fill: parent
+            clip: true
+
+            ColumnLayout {
+                width: consultationDetailDialog.width - 40
+                spacing: 15
+
+                // 基本信息区域
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: infoColumn.implicitHeight + 30
+                    color: "#fff3e0"
+                    radius: 8
+
+                    ColumnLayout {
+                        id: infoColumn
+                        anchors.fill: parent
+                        anchors.margins: 15
+                        spacing: 10
+
+                        Text {
+                            text: "📌 基本信息"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#e65100"
+                        }
+
+                        GridLayout {
+                            columns: 2
+                            columnSpacing: 30
+                            rowSpacing: 8
+                            Layout.fillWidth: true
+
+                            Text { text: "咨询ID："; color: "#666"; font.pixelSize: 13 }
+                            Text { text: consultationDetailDialog.consultationId; color: "#333"; font.pixelSize: 13 }
+
+                            Text { text: "学生姓名："; color: "#666"; font.pixelSize: 13 }
+                            Text { text: consultationDetailDialog.studentName || "-"; color: "#333"; font.pixelSize: 13 }
+
+                            Text { text: "咨询师："; color: "#666"; font.pixelSize: 13 }
+                            Text { text: consultationDetailDialog.counselor || "-"; color: "#333"; font.pixelSize: 13 }
+
+                            Text { text: "咨询日期："; color: "#666"; font.pixelSize: 13 }
+                            Text { text: consultationDetailDialog.consultationDate || "-"; color: "#333"; font.pixelSize: 13 }
+
+                            Text { text: "咨询类型："; color: "#666"; font.pixelSize: 13 }
+                            Rectangle {
+                                width: 80
+                                height: 24
+                                color: getTypeColor(consultationDetailDialog.consultationType)
+                                radius: 4
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: consultationDetailDialog.consultationType || "-"
+                                    font.pixelSize: 12
+                                    color: "white"
+                                }
+
+                                function getTypeColor(type) {
+                                    if (type === "个人咨询") return "#3498db"
+                                    if (type === "团体辅导") return "#9b59b6"
+                                    if (type === "危机干预") return "#e74c3c"
+                                    if (type === "心理测评") return "#27ae60"
+                                    return "#95a5a6"
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 联系方式和时长
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: contactColumn.implicitHeight + 30
+                    color: "#e3f2fd"
+                    radius: 8
+
+                    ColumnLayout {
+                        id: contactColumn
+                        anchors.fill: parent
+                        anchors.margins: 15
+                        spacing: 10
+
+                        Text {
+                            text: "📞 联系信息"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#1565c0"
+                        }
+
+                        GridLayout {
+                            columns: 2
+                            columnSpacing: 30
+                            rowSpacing: 8
+                            Layout.fillWidth: true
+
+                            Text { text: "联系电话："; color: "#666"; font.pixelSize: 13 }
+                            Text { 
+                                text: consultationDetailDialog.phoneNumber || "未填写"
+                                color: consultationDetailDialog.phoneNumber ? "#333" : "#999"
+                                font.pixelSize: 13
+                            }
+
+                            Text { text: "咨询时长："; color: "#666"; font.pixelSize: 13 }
+                            Text { 
+                                text: consultationDetailDialog.duration > 0 ? 
+                                      consultationDetailDialog.duration + " 分钟" : "未记录"
+                                color: consultationDetailDialog.duration > 0 ? "#333" : "#999"
+                                font.pixelSize: 13
+                            }
+                        }
+                    }
+                }
+
+                // 学生反馈
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: feedbackColumn.implicitHeight + 30
+                    color: "#f3e5f5"
+                    radius: 8
+
+                    ColumnLayout {
+                        id: feedbackColumn
+                        anchors.fill: parent
+                        anchors.margins: 15
+                        spacing: 10
+
+                        Text {
+                            text: "💬 学生反馈（自评）"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#7b1fa2"
+                        }
+
+                        Text {
+                            text: consultationDetailDialog.selfEvaluation || "暂无反馈"
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 13
+                            color: consultationDetailDialog.selfEvaluation ? "#333" : "#999"
+                            lineHeight: 1.4
+                        }
+                    }
+                }
+
+                // 咨询总结
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: summaryColumn.implicitHeight + 30
+                    color: "#e8f5e9"
+                    radius: 8
+
+                    ColumnLayout {
+                        id: summaryColumn
+                        anchors.fill: parent
+                        anchors.margins: 15
+                        spacing: 10
+
+                        Text {
+                            text: "📝 咨询总结"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#2e7d32"
+                        }
+
+                        Text {
+                            text: consultationDetailDialog.summary || "暂无总结"
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 13
+                            color: consultationDetailDialog.summary ? "#333" : "#999"
+                            lineHeight: 1.4
+                        }
+                    }
+                }
+
+                // 关闭按钮
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 10
+
+                    Item { Layout.fillWidth: true }
+
+                    Button {
+                        text: "关闭"
+                        Layout.preferredWidth: 100
+                        Layout.preferredHeight: 36
+
+                        background: Rectangle {
+                            color: parent.down ? "#e67e22" : "#ff9800"
+                            radius: 4
+                        }
+
+                        contentItem: Text {
+                            text: parent.text
+                            color: "white"
+                            font.pixelSize: 14
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: consultationDetailDialog.close()
+                    }
+
+                    Item { Layout.fillWidth: true }
+                }
+            }
+        }
     }
 }

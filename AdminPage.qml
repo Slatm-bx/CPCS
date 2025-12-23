@@ -306,6 +306,14 @@ Rectangle {
                     function onShowSurveyDialog() {
                         adminPage.showSurveyDialog()
                     }
+
+                    function onShowConsultationDetailDialog(consultationId, studentName, counselor,
+                                                             consultationDate, consultationType,
+                                                             duration, phoneNumber, selfEvaluation, summary) {
+                        dialogs.openConsultationDetailDialog(consultationId, studentName, counselor,
+                                                              consultationDate, consultationType,
+                                                              duration, phoneNumber, selfEvaluation, summary)
+                    }
                 }
             }
         }

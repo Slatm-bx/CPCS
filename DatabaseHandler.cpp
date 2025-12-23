@@ -1286,3 +1286,68 @@ QVariantList DatabaseHandler::getTestHistory(const QString &studentId)
     qDebug() << "获取到" << historyList.size() << "条测试历史记录";
     return historyList;
 }
+
+// ==========================================
+// 管理员咨询监管操作
+// ==========================================
+
+QVariantList DatabaseHandler::getAllConsultationLogs()
+{
+    QVariantList logsList;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取所有咨询日志";
+        return logsList;
+    }
+
+    QSqlQuery query(m_database);
+
+    // 查询所有咨询日志，关联学生姓名
+    QString sql = "SELECT "
+                  "cl.consultation_id, "
+                  "cl.student_id, "
+                  "cl.teacher_id, "
+                  "cl.consultationDate, "
+                  "cl.consultation_slot, "
+                  "cl.counselor, "
+                  "cl.type, "
+                  "cl.is_completed, "
+                  "cl.duration, "
+                  "cl.summary, "
+                  "cl.selfevaluation, "
+                  "cl.phoneNumber, "
+                  "sp.real_name as student_name "
+                  "FROM consultationLog cl "
+                  "LEFT JOIN student_profiles sp ON cl.student_id = sp.user_id "
+                  "ORDER BY cl.consultationDate DESC, cl.consultation_slot";
+
+    if (!query.exec(sql)) {
+        // qDebug() << "查询所有咨询日志失败:" << query.lastError().text();
+        return logsList;
+    }
+
+    // int count = 0;
+    while (query.next()) {
+        QVariantMap log;
+
+        log["consultationId"] = query.value("consultation_id").toInt();
+        log["studentId"] = query.value("student_id").toString();
+        log["studentName"] = query.value("student_name").toString();
+        log["teacherId"] = query.value("teacher_id").toString();
+        log["counselor"] = query.value("counselor").toString();
+        log["consultationDate"] = query.value("consultationDate").toString();
+        log["consultationSlot"] = query.value("consultation_slot").toString();
+        log["consultationType"] = query.value("type").toString();
+        log["isCompleted"] = query.value("is_completed").toBool();
+        log["duration"] = query.value("duration").toInt();
+        log["summary"] = query.value("summary").toString();
+        log["selfEvaluation"] = query.value("selfevaluation").toString();
+        log["phoneNumber"] = query.value("phoneNumber").toString();
+
+        logsList.append(log);
+        // count++;
+    }
+
+    // qDebug() << "成功获取所有咨询日志，共" << count << "条";
+    return logsList;
+}
