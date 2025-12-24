@@ -625,7 +625,7 @@ bool DatabaseHandler::submitTeacherAppointment(const QString &teacherId,
 
         // 修改SQL，直接使用TEXT类型的teacher_id和student_id
         query.prepare("INSERT INTO teacherMessage (teacher_id, studentName, appointDate, appoint_slot, "
-                      "phoneNumber, consultType, problom, is_read, is_pass, student_id) "
+                      "phoneNumber, consultType, problem, is_read, is_pass, student_id) "
                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         // 直接使用TEXT类型，不需要转换
@@ -635,7 +635,7 @@ bool DatabaseHandler::submitTeacherAppointment(const QString &teacherId,
         query.addBindValue(appointSlot);               // appoint_slot (TEXT)
         query.addBindValue(phoneNumber);               // phoneNumber (TEXT)
         query.addBindValue(consultType);               // consultType (TEXT)
-        query.addBindValue(problem.isEmpty() ? QVariant() : problem); // problom (TEXT)
+        query.addBindValue(problem.isEmpty() ? QVariant() : problem); // problem (TEXT)
         query.addBindValue(0);                         // is_read = 0 (未读)
         query.addBindValue(0);                         // is_pass = 0 (未通过，待审核)
         query.addBindValue(studentId);                 // student_id (TEXT)
