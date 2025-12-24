@@ -5,6 +5,7 @@
 var teacherFunctions = [
     {id: "consultation_process", title: "咨询处理", icon: "🔄", filePath: "ConsultationProcess.qml"},
     {id: "consultation_records", title: "咨询记录", icon: "📋", filePath: "ConsultationRecords.qml"},
+    {id: "personal_center", title: "个人中心", icon: "👤", filePath: "TPersonalCenter.qml"}
 ]
 
 // 活动页面ID

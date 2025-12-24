@@ -1798,3 +1798,160 @@ QString DatabaseHandler::getStudentName(const QString &studentId)
         return "未知学生";
     }
 }
+
+// 获取教师个人信息
+QVariantMap DatabaseHandler::getTeacherProfile(const QString &teacherId)
+{
+    QVariantMap profile;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取教师信息";
+        return profile;
+    }
+
+    QSqlQuery query(m_database);
+    query.prepare("SELECT real_name, department, title, specialty "
+                  "FROM teacher_profiles "
+                  "WHERE user_id = ?");
+    query.addBindValue(teacherId);
+
+    if (!query.exec()) {
+        qDebug() << "查询教师信息失败:" << query.lastError().text();
+        return profile;
+    }
+
+    if (query.next()) {
+        profile["realName"] = query.value("real_name").toString();
+        profile["department"] = query.value("department").toString();
+        profile["title"] = query.value("title").toString();
+        profile["specialty"] = query.value("specialty").toString();
+
+        // 设置默认头像
+        profile["avatar"] = "👨‍🏫";
+
+        qDebug() << "获取到教师信息:" << profile["realName"].toString();
+    } else {
+        qDebug() << "教师信息不存在，创建默认信息";
+        // 如果教师信息不存在，创建默认记录
+        QSqlQuery insertQuery(m_database);
+        insertQuery.prepare("INSERT INTO teacher_profiles (user_id, real_name) "
+                            "VALUES (?, '教师')");
+        insertQuery.addBindValue(teacherId);
+        if (insertQuery.exec()) {
+            profile["realName"] = "教师";
+            profile["avatar"] = "👨‍🏫";
+            profile["department"] = "";
+            profile["title"] = "";
+            profile["specialty"] = "";
+        }
+    }
+
+    return profile;
+}
+
+// 更新教师个人信息
+bool DatabaseHandler::updateTeacherProfile(const QString &teacherId,
+                                           const QString &realName,
+                                           const QString &department,
+                                           const QString &title,
+                                           const QString &specialty)
+{
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法更新教师信息";
+        return false;
+    }
+
+    QSqlQuery query(m_database);
+
+    // 检查记录是否存在
+    query.prepare("SELECT COUNT(*) FROM teacher_profiles WHERE user_id = ?");
+    query.addBindValue(teacherId);
+    if (!query.exec() || !query.next()) {
+        qDebug() << "检查教师记录失败";
+        return false;
+    }
+
+    int count = query.value(0).toInt();
+
+    if (count > 0) {
+        // 更新现有记录
+        query.prepare("UPDATE teacher_profiles SET "
+                      "real_name = ?, department = ?, title = ?, specialty = ? "
+                      "WHERE user_id = ?");
+        query.addBindValue(realName);
+        query.addBindValue(department);
+        query.addBindValue(title);
+        query.addBindValue(specialty);
+        query.addBindValue(teacherId);
+    } else {
+        // 插入新记录
+        query.prepare("INSERT INTO teacher_profiles (user_id, real_name, department, title, specialty) "
+                      "VALUES (?, ?, ?, ?, ?)");
+        query.addBindValue(teacherId);
+        query.addBindValue(realName);
+        query.addBindValue(department);
+        query.addBindValue(title);
+        query.addBindValue(specialty);
+    }
+
+    if (!query.exec()) {
+        qDebug() << "更新教师信息失败:" << query.lastError().text();
+        return false;
+    }
+
+    qDebug() << "教师信息更新成功";
+    return true;
+}
+
+// 获取教师统计信息
+QVariantMap DatabaseHandler::getTeacherStatistics(const QString &teacherId)
+{
+    QVariantMap stats;
+
+    if (!openDatabase()) {
+        qDebug() << "数据库连接失败，无法获取教师统计信息";
+        return stats;
+    }
+
+    QSqlQuery query(m_database);
+
+    // 咨询次数
+    query.prepare("SELECT COUNT(*) FROM consultationLog WHERE teacher_id = ?");
+    query.addBindValue(teacherId);
+    if (query.exec() && query.next()) {
+        stats["consultationCount"] = query.value(0).toInt();
+    }
+
+    // 咨询学生人数（去重）
+    query.prepare("SELECT COUNT(DISTINCT student_id) FROM consultationLog WHERE teacher_id = ?");
+    query.addBindValue(teacherId);
+    if (query.exec() && query.next()) {
+        stats["studentCount"] = query.value(0).toInt();
+    }
+
+    // 平均咨询时长
+    query.prepare("SELECT AVG(duration) FROM consultationLog WHERE teacher_id = ?");
+    query.addBindValue(teacherId);
+    if (query.exec() && query.next()) {
+        stats["avgDuration"] = qRound(query.value(0).toDouble());
+    }
+
+    // 平均满意度评分 - 假设有satisfaction字段，如果没有可以注释掉
+    // query.prepare("SELECT AVG(satisfaction) FROM consultationLog WHERE teacher_id = ? AND satisfaction IS NOT NULL");
+    // query.addBindValue(teacherId);
+    // if (query.exec() && query.next()) {
+    //     stats["satisfactionScore"] = qRound(query.value(0).toDouble());
+    // }
+
+    // 设置默认值（如果没有数据）
+    stats["consultationCount"] = stats.contains("consultationCount") ? stats["consultationCount"].toInt() : 0;
+    stats["studentCount"] = stats.contains("studentCount") ? stats["studentCount"].toInt() : 0;
+    stats["avgDuration"] = stats.contains("avgDuration") ? stats["avgDuration"].toInt() : 0;
+    stats["satisfactionScore"] = stats.contains("satisfactionScore") ? stats["satisfactionScore"].toInt() : 0;
+
+    qDebug() << "获取教师统计信息: 咨询" << stats["consultationCount"].toInt()
+             << "次，学生" << stats["studentCount"].toInt()
+             << "人，平均时长" << stats["avgDuration"].toInt() << "分钟";
+
+    return stats;
+}

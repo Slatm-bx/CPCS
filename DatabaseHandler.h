@@ -144,6 +144,17 @@ public:
                                            bool isCompleted); //更新4个数据
     Q_INVOKABLE QString getStudentName(const QString &studentId);
 
+    // 获取教师个人信息
+    Q_INVOKABLE QVariantMap getTeacherProfile(const QString &teacherId);
+    // 更新教师个人信息
+    Q_INVOKABLE bool updateTeacherProfile(const QString &teacherId,
+                                          const QString &realName,
+                                          const QString &department,
+                                          const QString &title,
+                                          const QString &specialty);
+    // 获取教师统计信息
+    Q_INVOKABLE QVariantMap getTeacherStatistics(const QString &teacherId);
+
 private:
     bool openDatabase();
     QSqlDatabase m_database;

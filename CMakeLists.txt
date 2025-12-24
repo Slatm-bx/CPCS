@@ -50,6 +50,7 @@ qt_add_qml_module(apppsychological
     #教师
     SOURCES teachermessagemodel.h teachermessagemodel.cpp
     SOURCES consultationlogmodel.h consultationlogmodel.cpp
+    QML_FILES TPersonalCenter.qml
 )
 
 source_group("QML Files" FILES
@@ -65,6 +66,7 @@ source_group("Student Files" FILES
 source_group("Teacher Files" FILES
     TeacherPage.qml teacherManager.js TeacherHome.qml ConsultationProcess.qml
     ConsultationRecords.qml StudentManagement.qml ProfessionalResources.qml
+    QML_FILES TPersonalCenter.qml
 )
 
 source_group("Admin Files" FILES
