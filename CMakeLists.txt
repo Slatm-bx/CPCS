@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0.3)
+cmake_minimum_required(VERSION 3.31.2)
 
 project(psychological VERSION 0.1 LANGUAGES CXX)
 
@@ -47,6 +47,9 @@ qt_add_qml_module(apppsychological
     SOURCES user.h user.cpp usermodel.cpp usermodel.h teacher.h teacher.cpp student.cpp student.h
     QML_FILES CustomDialogs.qml
     QML_FILES dialogManager.js
+    #教师
+    SOURCES teachermessagemodel.h teachermessagemodel.cpp
+    SOURCES consultationlogmodel.h consultationlogmodel.cpp
 )
 
 source_group("QML Files" FILES

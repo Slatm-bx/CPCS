@@ -117,6 +117,33 @@ public:
     // 删除测试卷
     Q_INVOKABLE bool deletePsychologicalTest(int anTestId);
 
+    //教师：--咨询（消息）处理
+    Q_INVOKABLE QVariantList getTeacherMessages(const QString &teacherId);
+    Q_INVOKABLE bool updateMessageReadStatus(int tmId, bool isRead);
+    Q_INVOKABLE bool updateAppointmentStatus(int tmId, int isPass);
+    Q_INVOKABLE bool insertStudentMessage(const QString &studentId,
+                                          const QString &teacherId,
+                                          const QString &teacherName,
+                                          const QString &appointDate,
+                                          const QString &appointSlot,
+                                          int isPass); //在学生消息表中插入记录
+    Q_INVOKABLE QString getTeacherName(const QString &teacherId);
+    Q_INVOKABLE bool insertConsultationLog(const QString &studentId,
+                                           const QString &teacherId,
+                                           const QString &consultationDate,
+                                           const QString &consultationSlot,
+                                           const QString &counselor,
+                                           const QString &type,
+                                           const QString &phoneNumber); // 日志
+    //教师--咨询记录
+    Q_INVOKABLE QVariantList getConsultationLogsForTeacher(const QString &teacherId);
+    Q_INVOKABLE bool updateConsultationLog(const QString &consultationId,
+                                           int duration,
+                                           const QString &summary,
+                                           const QString &selfEvaluation,
+                                           bool isCompleted); //更新4个数据
+    Q_INVOKABLE QString getStudentName(const QString &studentId);
+
 private:
     bool openDatabase();
     QSqlDatabase m_database;
