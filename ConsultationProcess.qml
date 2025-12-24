@@ -337,9 +337,9 @@ Rectangle {
                         model: TeacherMessageModel {
                             id: teacherMessageModel
 
-                            onDataLoaded: {
-                                console.log("Data loaded in model:", success, message);
-                            }
+                            // onDataLoaded: {
+                            //     console.log("Data loaded in model:", message);
+                            // }
                         }
 
                         delegate: Rectangle {

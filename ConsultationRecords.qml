@@ -290,9 +290,9 @@ Rectangle {
                         model: ConsultationLogModel {
                             id: consultationLogModel
 
-                            onDataLoaded: {
-                                console.log("数据加载完成:", success, message)
-                            }
+                            // onDataLoaded: {
+                            //     console.log("数据加载完成:",message)
+                            // }
                         }
 
                         delegate: Item {

@@ -34,7 +34,7 @@ qt_add_qml_module(apppsychological
     QML_FILES TeacherHome.qml
     QML_FILES ConsultationProcess.qml
     QML_FILES ConsultationRecords.qml
-    QML_FILES ProfessionalResources.qml
+    QML_FILES
     QML_FILES adminManager.js
     QML_FILES AdminHome.qml
     QML_FILES UserManagement.qml

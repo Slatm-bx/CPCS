@@ -637,7 +637,7 @@ bool DatabaseHandler::submitTeacherAppointment(const QString &teacherId,
         query.addBindValue(consultType);               // consultType (TEXT)
         query.addBindValue(problem.isEmpty() ? QVariant() : problem); // problom (TEXT)
         query.addBindValue(0);                         // is_read = 0 (未读)
-        query.addBindValue(1);                         // is_pass = 1 (未通过，待审核)
+        query.addBindValue(0);                         // is_pass = 0 (未通过，待审核)
         query.addBindValue(studentId);                 // student_id (TEXT)
 
         if (!query.exec()) {
